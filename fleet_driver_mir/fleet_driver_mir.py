@@ -155,6 +155,8 @@ class FleetDriverMir(Node):
 
         # Create each path request and put in mission queue
         index = 0
+        past_x=robot.prev_target.x
+        past_y=robot.prev_target.y
         for location_request in msg.path:
             # Translate path request from RMF frame to MiR frame
             location_rmf = [location_request.x, location_request.y]
@@ -163,24 +165,24 @@ class FleetDriverMir(Node):
             location_request_mir = Location()
             location_request_mir.x = location_mir[0]
             location_request_mir.y = location_mir[1]
-            location_request_mir.yaw = 180.0
-            # Create the corresponding mission
-            if index > 1:
-                if index == 6:
-                    # move to position docking_ot
-                    mission_id = self.create_move_mission(
-                        robot, 'L1/docking_ot'
-                    )
-                #Directly verify that pose is charger
-                elif location_request_mir.x == 13.750 and location_request_mir.y == 16.360:
-                    mission_id=robot.missions['MiRCharger']
-                #check if coordinates is charger
-                elif "{} {} MiRCharger".format(location_request_mir.x,location_request_mir.y) in robot.missions:
-                    mission_id=robot.missions["{} {} MiRCharger".format(location_request_mir.x,location_request_mir.y)]
-                else:
-                    mission_id = self.create_move_coordinate_mission(
-                        robot, location_request_mir
-                    )
+            location_request_mir.yaw = math.atan((location_request_mir.y-past_y)/(location_request_mir.x-past_x))
+            past_x=location_request_mir.x
+            past_y=location_request_mir.y
+
+
+            # Check if coordinates refer to a special mission
+            for i in robot.missions:
+                if "{} {}".format(x,y) in i:
+                    if i.split()[3]=="charger":
+                        mission_id = self.create_move_mission(i)
+                        break
+                    elif i.split()[2]=="docking_ot":
+                        mission_id = self.create_move_mission(i)
+                        break
+            if mission_id == None:
+                mission_id = self.create_move_coordinate_mission(
+                    robot, location_request_mir
+                )
 
                 # Execute the mission
                 try:
