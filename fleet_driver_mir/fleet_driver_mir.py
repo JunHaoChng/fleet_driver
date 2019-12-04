@@ -171,6 +171,12 @@ class FleetDriverMir(Node):
                     mission_id = self.create_move_mission(
                         robot, 'L1/docking_ot'
                     )
+                #Directly verify that pose is charger
+                elif location_request_mir.x == 13.750 and location_request_mir.y == 16.360:
+                    mission_id=robot.missions['MiRCharger']
+                #check if coordinates is charger
+                elif "{} {} MiRCharger".format(location_request_mir.x,location_request_mir.y) in robot.missions:
+                    mission_id=robot.missions["{} {} MiRCharger".format(location_request_mir.x,location_request_mir.y)]
                 else:
                     mission_id = self.create_move_coordinate_mission(
                         robot, location_request_mir
