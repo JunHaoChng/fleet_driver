@@ -167,10 +167,8 @@ class FleetDriverMir(Node):
             # Create the corresponding mission
             if index > 1:
                 if index == 6:
-                    # move to position docking_ot
-                    mission_id = self.create_move_mission(
-                        robot, 'L1/docking_ot'
-                    )
+                    # Call the docking mission directly
+                    mission_id = robot.missions['docking_ot'].guid
                 else:
                     mission_id = self.create_move_coordinate_mission(
                         robot, location_request_mir
@@ -221,6 +219,29 @@ class FleetDriverMir(Node):
         self.get_logger().info(f'created mission to move coordinate to "{location}"')
         return response.guid
 
+    def create_dock_mission(self, robot, dock_name):
+        mission = PostMissions(
+            # mir const, retrieved with GET /mission_groups
+            group_id='mirconst-guid-0000-0001-missiongroup',
+            name=f'dock_to_{dock_name}',
+            description='automatically created by mir fleet adapter',
+        )
+        response = robot.api.missions_post(mission)
+        action = PostMissionActions(
+            action_type='docking',
+            mission_id=response.guid,
+            parameters=[
+                {'id': 'marker', 'value': dock_name},
+            ],
+            priority=1
+        )
+        response2 = robot.api.missions_mission_id_actions_post(
+            mission_id=response.guid,
+            body=action
+        )
+        self.get_logger().info(f'created mission to move to "{dock_name}"')
+        return response.guid
+
     def create_move_mission(self, robot, place_name, retries=10):
         '''
         creates a mission to move to metamap place
@@ -265,7 +286,6 @@ class FleetDriverMir(Node):
         # self.api_clients = []
         for i in range(len(config['robots'])):
             self.api_clients.append(self.create_single_api_client(config, i))
-        import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
         return self.api_clients
 
     def create_single_api_client(self, config, idx):
