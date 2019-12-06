@@ -9,7 +9,7 @@ import nudged
 
 import mir100_client
 from mir100_client.rest import ApiException
-from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions
+from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions, put_status
 import urllib3
 
 import rclpy
@@ -96,7 +96,7 @@ class FleetDriverMir(Node):
             self.robots[robot.name] = robot
             self.get_logger().info(f'successfully initialized robot \
                                    {robot.name}')
-
+            print(robot.missions)
         # Setup fleet driver ROS2 topic subscriptions
         self.path_request_sub = self.create_subscription(
             PathRequest, '/robot_path_requests', self.on_path_request
@@ -142,6 +142,13 @@ class FleetDriverMir(Node):
                                    DefaultApi->status_get: %s\n' %e)
 
     def on_robot_mode_request(self, msg):
+        robot = self.robots[msg.robot_name]
+        desired_mode = msg.mode.mode
+        #mapping
+        mir_mode_request_dict={2: 3,3:4} #manual is mir mode 11
+        status = put_status(state_id=4)   
+
+        robot.api.status_put(put_status())  
         pass
 
     def on_path_request(self, msg):

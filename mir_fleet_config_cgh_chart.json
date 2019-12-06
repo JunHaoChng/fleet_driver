@@ -1,0 +1,18 @@
+{
+  "robots": [
+    {
+      "name": "mir1",
+      "base_url": "http://192.168.12.20/api/v2.0.0",
+      "user": "admin",
+      "password": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+      "starting_map": "L1"
+    }
+  ],
+  "maps": {
+     "L1": {
+        "ref_places": ["L1/door_west"]
+    }
+  },
+  "auto_create_missions": false,
+  "auto_create_positions": true
+}
