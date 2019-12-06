@@ -9,7 +9,7 @@ import nudged
 
 import mir100_client
 from mir100_client.rest import ApiException
-from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions, put_status
+from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions, PutStatus
 import urllib3
 
 import rclpy
@@ -84,7 +84,7 @@ class FleetDriverMir(Node):
 
             mir_status = robot.api.status_get()
             robot.name = mir_status.robot_name
-
+            print(robot.name)
             self.load_missions(robot)
             self.update_positions(robot)
             # reset retries
@@ -142,14 +142,13 @@ class FleetDriverMir(Node):
                                    DefaultApi->status_get: %s\n' %e)
 
     def on_robot_mode_request(self, msg):
+        print("new mode request for {}'s {} {}".format(msg.fleet_name, msg.robot_name, msg.mode.mode))
         robot = self.robots[msg.robot_name]
         desired_mode = msg.mode.mode
         #mapping
-        mir_mode_request_dict={2: 3,3:4} #manual is mir mode 11
-        status = put_status(state_id=4)   
-
-        robot.api.status_put(put_status())  
-        pass
+        mir_mode_request_dict={2: MirState.READY,3:MirState.PAUSE} #manual is mir mode 11
+        status = PutStatus(state_id=mir_mode_request_dict[desired_mode])   
+        robot.api.status_put(status)
 
     def on_path_request(self, msg):
         # msg.robot_name = 'MiR_R1442'
