@@ -142,7 +142,8 @@ class FleetDriverMir(Node):
                                    DefaultApi->status_get: %s\n' %e)
 
     def on_robot_mode_request(self, msg):
-        print("new mode request for {}'s {} {}".format(msg.fleet_name, msg.robot_name, msg.mode.mode))
+        self.get_logger().info(f'ModeRequest received: \
+        Changing "{msg.robot_name}" to "{msg.mode.mode}"')
         robot = self.robots[msg.robot_name]
         desired_mode = msg.mode.mode
         #mapping
