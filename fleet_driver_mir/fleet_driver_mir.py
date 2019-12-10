@@ -119,6 +119,9 @@ class FleetDriverMir(Node):
                 robot_state.name = robot.name
                 robot_state.battery_percent = api_response.battery_percentage
                 location = Location()
+                location.x = api_response.position.x
+                location.y = api_response.position.y
+                location.yaw = api_response.position.orientation
                 # TODO Transform from MiR frame to RMF frame
                 robot_state.location = location
 
