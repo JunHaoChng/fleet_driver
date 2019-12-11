@@ -61,8 +61,10 @@ class FleetDriverMir(Node):
         self.pub_timer = self.create_timer(
             self.STATUS_PUB_RATE, self.pub_fleet
         )
-        self.ref_coordinates_rmf = [[26.95, -20.23], [29.26, -22.38], [11.4, -16.48]]
-        self.ref_coordinates_mir = [[7.2, 16.6], [5.15, 18.35], [23, 12.35]]
+        self.ref_coordinates_rmf = [[26.95, -20.23], [29.26, -22.38], [11.4, -16.48],
+                                    [14.41, -24.89], [12.46, -16.99]]
+        self.ref_coordinates_mir = [[7.2, 16.6], [5.15, 18.35], [23, 12.35],
+                                    [20.8, 20.35], [22.05, 12.95]]
         self.rmf2mir_transform = nudged.estimate(
             self.ref_coordinates_rmf,
             self.ref_coordinates_mir
@@ -145,7 +147,12 @@ class FleetDriverMir(Node):
                                    DefaultApi->status_get: %s\n' %e)
 
     def on_robot_mode_request(self, msg):
-        pass
+        self.get_logger().info(f'sending robot {msg.robot_name} mode to {msg.mode}')
+
+    def calculate_path_request_yaw(self, location_request, location_request_next):
+        dx = location_request_next.x - location_request.x
+        dy = location_request_next.y - location_request.y
+        return math.atan2(dy, dx)
 
     def on_path_request(self, msg):
         # msg.robot_name = 'MiR_R1442'
@@ -157,39 +164,43 @@ class FleetDriverMir(Node):
         robot.api.mission_queue_delete()
 
         # Create each path request and put in mission queue
-        index = 0
-        for location_request in msg.path:
+        yaw_previous = 0.0
+        for index, location_request in enumerate(msg.path):
             # Translate path request from RMF frame to MiR frame
             location_rmf = [location_request.x, location_request.y]
             location_mir = self.rmf2mir_transform.transform(location_rmf)
-
             location_request_mir = Location()
             location_request_mir.x = location_mir[0]
             location_request_mir.y = location_mir[1]
-            location_request_mir.yaw = 180.0
+
+            if index < (len(msg.path) -1):
+                location_rmf_next = [msg.path[index+1].x, msg.path[index+1].y]
+                location_mir_next = self.rmf2mir_transform.transform(location_rmf_next)
+                location_request_mir_next = Location()
+                location_request_mir_next.x = location_mir_next[0]
+                location_request_mir_next.y = location_mir_next[1]
+                yaw = self.calculate_path_request_yaw(
+                    location_request_mir, location_request_mir_next
+                )
+                location_request_mir.yaw = math.degrees(yaw)
+                yaw_previous = location_request_mir.yaw
+            elif index == (len(msg.path) -1 ) :
+                location_request_mir.yaw = yaw_previous
+
+
             # Create the corresponding mission
-            if index > 1:
-                if index == 6:
-                    # Call the docking mission directly
-                    mission_id = robot.missions['docking_ot'].guid
-                else:
-                    mission_id = self.create_move_coordinate_mission(
-                        robot, location_request_mir
-                    )
+            mission_id = self.create_move_coordinate_mission(
+                robot, location_request_mir
+            )
 
-                # Execute the mission
-                try:
-                    # mission_id = robot.missions[
-                    #     f'move_coordinate_to_{location_request_mir.x:.3f}_{location_request_mir.y:.3f}'
-                    # ].guid
-                    mission = PostMissionQueues(mission_id=mission_id)
-                    robot.api.mission_queue_post(mission)
-                except KeyError:
-                    self.get_logger().error(
-                        f'no mission to move coordinate to \
-                        "{location_request_mir.x:.3f}_{location_request_mir.y:.3f}"!')
-
-            index += 1
+            # Execute the mission
+            try:
+                mission = PostMissionQueues(mission_id=mission_id)
+                robot.api.mission_queue_post(mission)
+            except KeyError:
+                self.get_logger().error(
+                    f'no mission to move coordinate to \
+                    "{location_request_mir.x:.3f}_{location_request_mir.y:.3f}"!')
 
     def load_missions(self, robot):
         self.get_logger().info('retrieving missions...')
