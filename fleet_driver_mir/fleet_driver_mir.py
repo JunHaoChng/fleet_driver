@@ -16,7 +16,7 @@ import rclpy
 from rclpy.node import Node
 
 from rmf_fleet_msgs.msg import PathRequest, ModeRequest, RobotState, FleetState, \
-    Location, RobotMode
+    Location, RobotMode, ModeParameter
 
 
 class Robot():
@@ -148,6 +148,21 @@ class FleetDriverMir(Node):
 
     def on_robot_mode_request(self, msg):
         self.get_logger().info(f'sending robot {msg.robot_name} mode to {msg.mode}')
+        robot = self.robots[msg.robot_name]
+        # Find the mission
+        try:
+            mission_id = robot.missions[
+                f'{msg.parameters[0].name}_{msg.parameters[0].value}'].guid
+        except KeyError:
+            self.get_logger().error('Cannot find charging mission')
+
+        # Execute the mission
+        try:
+            mission = PostMissionQueues(mission_id = mission_id)
+            robot.api.mission_queue_post(mission)
+        except KeyError:
+            self.get_logger().error('Error when posting charging mission')
+
 
     def calculate_path_request_yaw(self, location_request, location_request_next):
         dx = location_request_next.x - location_request.x
