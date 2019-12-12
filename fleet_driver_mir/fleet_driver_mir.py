@@ -32,6 +32,7 @@ class Robot():
         self.place_sub = None
         self.mode_sub = None
         self.mode = None
+        self.current_task_id = 'idle'
 
 
 class MirState(enum.IntEnum):
@@ -123,6 +124,7 @@ class FleetDriverMir(Node):
                 api_response = robot.api.status_get()
                 robot_state = RobotState()
                 robot_state.name = robot.name
+                robot_state.task_id = robot.current_task_id
                 robot_state.battery_percent = api_response.battery_percentage
                 location = Location()
                 location.x = api_response.position.x
@@ -161,8 +163,13 @@ class FleetDriverMir(Node):
         robot = self.robots[msg.robot_name]
         # Find the mission
         try:
+            if msg.parameters[0].name == 'docking':
+                robot.mode = RobotMode.MODE_DOCKING
+
             mission_id = robot.missions[
                 f'{msg.parameters[0].name}_{msg.parameters[0].value}'].guid
+
+            robot.current_task_id = msg.task_id
         except KeyError:
             self.get_logger().error('Cannot find charging mission')
 
