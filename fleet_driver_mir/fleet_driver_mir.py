@@ -69,6 +69,10 @@ class FleetDriverMir(Node):
             self.ref_coordinates_rmf,
             self.ref_coordinates_mir
         )
+        self.mir2rmf_transform = nudged.estimate(
+            self.ref_coordinates_mir,
+            self.ref_coordinates_rmf
+        )
 
         for api_client in self.create_all_api_clients(self.fleet_config):
             self.get_logger().info(f'initializing robot from \
@@ -124,8 +128,14 @@ class FleetDriverMir(Node):
                 location.x = api_response.position.x
                 location.y = api_response.position.y
                 location.yaw = api_response.position.orientation
-                # TODO Transform from MiR frame to RMF frame
-                robot_state.location = location
+                # TODO Transform yaw from MiR frame to RMF frame
+                mir_pos = [location.x, location.y]
+                rmf_pos = self.mir2rmf_transform.transform(mir_pos)
+                rmf_location = Location()
+                rmf_location.x = rmf_pos[0]
+                rmf_location.y = rmf_pos[1]
+                rmf_location.yaw = location.yaw
+                robot_state.location = rmf_location
 
                 m = RobotMode()
                 if api_response.mission_text.startswith('Charging'):
