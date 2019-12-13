@@ -147,12 +147,11 @@ class FleetDriverMir(Node):
                                    DefaultApi->status_get: %s\n' %e)
 
     def on_robot_mode_request(self, msg):
+        if msg.robot_name not in self.robots:
+                return
         self.get_logger().info(f'sending robot {msg.robot_name} mode to {msg.mode}')
         robot = self.robots[msg.robot_name]
         # Find the mission
-
-        if msg.robot_name not in self.robots:
-                return
         robot = self.robots[msg.robot_name]
         desired_mode = msg.mode.mode
         if desired_mode in [2,3]:
@@ -182,13 +181,14 @@ class FleetDriverMir(Node):
         return math.atan2(dy, dx)
 
     def on_path_request(self, msg):
+        if msg.robot_name not in self.robots:
+                return
         # msg.robot_name = 'MiR_R1442'
         self.get_logger().info(f'PathReuest received: \
         sending "{msg.robot_name}" to "{msg.path}"')
 
         # Abort the current mission and all pending missions
-        if msg.robot_name not in self.robots:
-                return
+
         robot = self.robots[msg.robot_name]
         robot.api.mission_queue_delete()
         
@@ -235,6 +235,10 @@ class FleetDriverMir(Node):
         self.get_logger().info('retrieving missions...')
         robot.missions = {m.name: m for m in robot.api.missions_get()}
         self.get_logger().info(f'retrieved {len(robot.missions)} missions')
+        f= open("{}_missionlist.txt".format(robot.name),"w+")
+        for i in robot.missions:
+            f.write(""+i+"\n")
+        f.close()
 
     def create_move_coordinate_mission(self, robot, location, retries=10):
         mission = PostMissions(
