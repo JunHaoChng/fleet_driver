@@ -74,6 +74,8 @@ class FleetDriverMir(Node):
             self.ref_coordinates_rmf
         )
 
+        self.execution_timer = self.create_timer(1,self.execute_fleet)
+
         for api_client in self.create_all_api_clients(self.fleet_config):
             self.get_logger().info(f'initializing robot from \
                                    {api_client.configuration.host}')
@@ -350,6 +352,10 @@ class FleetDriverMir(Node):
         api_client = mir100_client.ApiClient(configuration)
         api_client.default_headers['Accept-Language'] = 'en-US'
         return api_client
+
+    def execute_fleet(self):
+        for robot in self.robots:
+            pass
 
 
 def main():
