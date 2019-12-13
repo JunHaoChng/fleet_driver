@@ -19,6 +19,7 @@ from rmf_fleet_msgs.msg import PathRequest, ModeRequest, RobotState, FleetState,
     Location, RobotMode, ModeParameter
 
 
+
 class Robot():
     def __init__(self):
         self.name = None
@@ -195,7 +196,7 @@ class FleetDriverMir(Node):
 
     def on_path_request(self, msg):
         # msg.robot_name = 'MiR_R1442'
-        self.get_logger().info(f'PathReuest received: \
+        self.get_logger().info(f'PathRequest received: \
         sending "{msg.robot_name}" to "{msg.path}"')
 
         # Abort the current mission and all pending missions
@@ -233,6 +234,9 @@ class FleetDriverMir(Node):
             mission_id = self.create_move_coordinate_mission(
                 robot, location_request_mir
             )
+
+            #Save timing for execution.
+            robot.timing=location_request_mir.t
 
             # Execute the mission
             try:
@@ -355,7 +359,14 @@ class FleetDriverMir(Node):
 
     def execute_fleet(self):
         for robot in self.robots:
-            pass
+            if robot.timing:
+                if time.ctime(seconds)>robot.timing.sec:
+                    status = PutStatus(state_id=MirState.READY)   
+                    robot.api.status_put(status)
+                    robot.timing=None
+                    self.get_logger().info(f'Sending {robot.name}...')
+                    return  
+
 
 
 def main():
