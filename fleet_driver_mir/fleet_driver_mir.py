@@ -5,6 +5,7 @@ import math
 import time
 import argparse
 import json
+import threading
 import nudged
 
 import mir100_client
@@ -18,9 +19,9 @@ from rclpy.node import Node
 from rmf_fleet_msgs.msg import PathRequest, ModeRequest, RobotState, FleetState, \
     Location, RobotMode, ModeParameter
 
-
 class Robot():
-    def __init__(self):
+    def __init__(self, parent):
+        self.parent = parent
         self.name = None
         self.api = None
         self.missions = {}
@@ -33,6 +34,67 @@ class Robot():
         self.mode_sub = None
         self.mode = None
         self.current_task_id = 'idle'
+        self.remaining_path = []
+
+        # Variables for managing the path queue execution thread
+        self._path_following_thread = None
+        self._path_quit_event = threading.Event()
+        self._path_quit_cv = threading.Condition()
+
+    def follow_new_path(self, msg):
+        self.api.mission_queue_delete()
+        self.current_task_id = msg.task_id
+        self.mode = RobotMode.MODE_MOVING
+        self.remaining_path.clear()
+
+        if self._path_following_thread is not None:
+            self._path_quit_event.set()
+            self._path_quit_cv.notify_all()
+            self._path_following_thread.join()
+
+        def path_following_closure():
+            # This function defines a worker thread that will wakeup at whatever times are needed
+            while (not _path_quit_event.is_set()) and self.remaining_path:
+                next_ros_time = self.remaining_path[0].t
+                next_mission_time = next_ros_time.sec + next_ros_time.nanosec/1e9
+
+                next_mission_wait = next_mission_time - time.time()
+                if next_mission_wait <= 0:
+                    self.remaining_path.pop(0)
+
+                    if not self.remaining_path:
+                        return
+
+                    next_mission_location = self.remaining_path[0]
+                    mir_p = parent.rmf2mir_transform(next_mission_location)
+
+                    mir_location = Location()
+                    mir_location.x = mir_p[0]
+                    mir_location.y = mir_p[1]
+                    mir_location.yaw = (
+                        next_mission_location.yaw
+                        + parent.rmf2mir_transform.get_rotation()
+                    )
+
+                    mission_id = parent.create_move_coordinate_mission(
+                        self, mir_location
+                    )
+
+                    try:
+                        mission = PostMissionQueues(mission_id=mission_id)
+                        self.api.mission_queue_post(mission)
+                    except KeyError:
+                        parent.get_logger().error(
+                            f'no mission to move coordinates to [{mir_location.x:3f}_{mir_location.y:.3f}]!'
+                        )
+                    continue
+
+                self._path_quit_cv.wait(next_mission_wait)
+
+        self.remaining_path = msg.path
+
+        self._path_quit_event.clear()
+        self._path_following_thread = threading.Thread(target=path_following_closure)
 
 
 class MirState(enum.IntEnum):
@@ -78,7 +140,7 @@ class FleetDriverMir(Node):
         for api_client in self.create_all_api_clients(self.fleet_config):
             self.get_logger().info(f'initializing robot from \
                                    {api_client.configuration.host}')
-            robot = Robot()
+            robot = Robot(self)
             robot.api = mir100_client.DefaultApi(api_client)
 
             # temporary retry configuration to workaround startup race condition while launching
@@ -138,8 +200,12 @@ class FleetDriverMir(Node):
                 rmf_location.y = rmf_pos[1]
                 rmf_location.yaw = location.yaw
                 robot_state.location = rmf_location
+                robot_state.path = robot.remaining_path
+                robot_state.location.t.sec = now_sec
+                robot_state.location.t.nanosec = now_ns
 
                 m = RobotMode()
+
                 if api_response.mission_text.startswith('Charging'):
                     m.mode = RobotMode.MODE_CHARGING
                     robot_state.mode = m
@@ -187,52 +253,17 @@ class FleetDriverMir(Node):
         return math.atan2(dy, dx)
 
     def on_path_request(self, msg):
-        # msg.robot_name = 'MiR_R1442'
-        self.get_logger().info(f'PathReuest received: \
-        sending "{msg.robot_name}" to "{msg.path}"')
 
         # Abort the current mission and all pending missions
         robot = self.robots[msg.robot_name]
-        robot.api.mission_queue_delete()
 
-        # Create each path request and put in mission queue
-        yaw_previous = 0.0
-        for index, location_request in enumerate(msg.path):
-            # Translate path request from RMF frame to MiR frame
-            location_rmf = [location_request.x, location_request.y]
-            location_mir = self.rmf2mir_transform.transform(location_rmf)
-            location_request_mir = Location()
-            location_request_mir.x = location_mir[0]
-            location_request_mir.y = location_mir[1]
+        if robot.current_task_id == msg.task_id:
+            self.get_logger().info(f'Already received task [{msg.task_id}].')
+            return
 
-            if index < (len(msg.path) -1):
-                location_rmf_next = [msg.path[index+1].x, msg.path[index+1].y]
-                location_mir_next = self.rmf2mir_transform.transform(location_rmf_next)
-                location_request_mir_next = Location()
-                location_request_mir_next.x = location_mir_next[0]
-                location_request_mir_next.y = location_mir_next[1]
-                yaw = self.calculate_path_request_yaw(
-                    location_request_mir, location_request_mir_next
-                )
-                location_request_mir.yaw = math.degrees(yaw)
-                yaw_previous = location_request_mir.yaw
-            elif index == (len(msg.path) -1 ) :
-                location_request_mir.yaw = yaw_previous
+        self.get_logger().info(f'Issuing task [{msg.task_id}] to robot [{msg.robot_name}]')
+        robot.follow_new_path(msg)
 
-
-            # Create the corresponding mission
-            mission_id = self.create_move_coordinate_mission(
-                robot, location_request_mir
-            )
-
-            # Execute the mission
-            try:
-                mission = PostMissionQueues(mission_id=mission_id)
-                robot.api.mission_queue_post(mission)
-            except KeyError:
-                self.get_logger().error(
-                    f'no mission to move coordinate to \
-                    "{location_request_mir.x:.3f}_{location_request_mir.y:.3f}"!')
 
     def load_missions(self, robot):
         self.get_logger().info('retrieving missions...')
