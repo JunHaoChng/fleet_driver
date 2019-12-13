@@ -9,7 +9,7 @@ import nudged
 
 import mir100_client
 from mir100_client.rest import ApiException
-from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions
+from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions, PutStatus
 import urllib3
 
 import rclpy
@@ -150,6 +150,18 @@ class FleetDriverMir(Node):
         self.get_logger().info(f'sending robot {msg.robot_name} mode to {msg.mode}')
         robot = self.robots[msg.robot_name]
         # Find the mission
+
+        if msg.robot_name not in self.robots:
+                return
+        robot = self.robots[msg.robot_name]
+        desired_mode = msg.mode.mode
+        if desired_mode in [2,3]:
+        #mapping
+                mir_mode_request_dict={2: MirState.READY,3:MirState.PAUSE} #manual is mir mode 11
+                status = PutStatus(state_id=mir_mode_request_dict[desired_mode])   
+                robot.api.status_put(status)
+                return
+
         try:
             mission_id = robot.missions[
                 f'{msg.parameters[0].name}_{msg.parameters[0].value}'].guid
