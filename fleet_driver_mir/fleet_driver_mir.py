@@ -175,9 +175,11 @@ class FleetDriverMir(Node):
         sending "{msg.robot_name}" to "{msg.path}"')
 
         # Abort the current mission and all pending missions
+        if msg.robot_name not in self.robots:
+                return
         robot = self.robots[msg.robot_name]
         robot.api.mission_queue_delete()
-
+        
         # Create each path request and put in mission queue
         yaw_previous = 0.0
         for index, location_request in enumerate(msg.path):
