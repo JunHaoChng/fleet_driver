@@ -236,24 +236,37 @@ class FleetDriverMir(Node):
         if robot.current_task_id == msg.task_id:
             self.get_logger().info(f'Already following task [{msg.task_id}]')
             return
-            
-        desired_mode = msg.mode.mode
-        if desired_mode in [2,3]:
-        #mapping
-                mir_mode_request_dict={2: MirState.READY,3:MirState.PAUSE} #manual is mir mode 11
-                status = PutStatus(state_id=mir_mode_request_dict[desired_mode])   
-                robot.api.status_put(status)
-                return
 
         robot.cancel_path()
 
-        self.get_logger().info(f'sending robot {msg.robot_name} mode to {msg.mode}')
+        # Mapping from RMF modes to MiR modes
+        # manual control is MiR mode 11
+        mir_mode_request_dict = {
+            RobotMode.MODE_MOVING: MirState.READY,
+            RobotMode.MODE_PAUSED: MirState.PAUSE
+        }
+
+        desired_mir_mode = mir_mode_request_dict.get(msg.mode.mode)
+        if desired_mir_mode:
+            self.get_logger().info(f'setting robot {msg.robot_name} mode to {msg.mode}')
+            status = PutStatus(state_id=desired_mir_mode)
+            robot.api.status_put(status)
+            return
+
+        if not msg.parameters:
+            self.get_logger().info(
+                f'Mode [{msg.mode.mode}] not recognized or requires additional parameters'
+            )
+            return
+
         # Find the mission
+        mission_str = f'{msg.parameters[0].name}_{mas.parameters[0].value}'
+        self.get_logger().info(f'Attempting to send mission [{mission_str}] to robot [{msg.robot_name}]')
         try:
-            mission_id = robot.missions[
-                f'{msg.parameters[0].name}_{msg.parameters[0].value}'].guid
+            mission_id = robot.missions[mission_str].guid
         except KeyError:
-            self.get_logger().error('Cannot find charging mission')
+            self.get_logger().error(f'Cannot find mission [{mission_str}]')
+            return
 
         # Execute the mission
         try:
