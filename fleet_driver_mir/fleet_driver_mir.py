@@ -41,20 +41,26 @@ class Robot():
         self._path_quit_event = threading.Event()
         self._path_quit_cv = threading.Condition()
 
-    def follow_new_path(self, msg):
-        self.api.mission_queue_delete()
-        self.current_task_id = msg.task_id
-        self.mode = RobotMode.MODE_MOVING
+
+    def cancel_path(self):
         self.remaining_path.clear()
+        self.mode = RobotMode.MODE_PAUSED
 
         if self._path_following_thread is not None:
             self._path_quit_event.set()
             self._path_quit_cv.notify_all()
             self._path_following_thread.join()
 
+        self.api.mission_queue_delete()
+
+
+    def follow_new_path(self, msg):
+        self.cancel_path()
+        self.mode = RobotMode.MODE_MOVING
+
         def path_following_closure():
             # This function defines a worker thread that will wakeup at whatever times are needed
-            while (not _path_quit_event.is_set()) and self.remaining_path:
+            while (not self._path_quit_event.is_set()) and self.remaining_path:
                 next_ros_time = self.remaining_path[0].t
                 next_mission_time = next_ros_time.sec + next_ros_time.nanosec/1e9
 
@@ -66,17 +72,17 @@ class Robot():
                         return
 
                     next_mission_location = self.remaining_path[0]
-                    mir_p = parent.rmf2mir_transform(next_mission_location)
+                    mir_p = self.parent.rmf2mir_transform(next_mission_location)
 
                     mir_location = Location()
                     mir_location.x = mir_p[0]
                     mir_location.y = mir_p[1]
                     mir_location.yaw = (
                         next_mission_location.yaw
-                        + parent.rmf2mir_transform.get_rotation()
+                        + self.parent.rmf2mir_transform.get_rotation()
                     )
 
-                    mission_id = parent.create_move_coordinate_mission(
+                    mission_id = self.parent.create_move_coordinate_mission(
                         self, mir_location
                     )
 
@@ -84,7 +90,7 @@ class Robot():
                         mission = PostMissionQueues(mission_id=mission_id)
                         self.api.mission_queue_post(mission)
                     except KeyError:
-                        parent.get_logger().error(
+                        self.parent.get_logger().error(
                             f'no mission to move coordinates to [{mir_location.x:3f}_{mir_location.y:.3f}]!'
                         )
                     continue
@@ -120,7 +126,7 @@ class FleetDriverMir(Node):
         self.fleet_config = fleet_config
         self.robots = {}
         self.api_clients = []
-        self.status_pub = self.create_publisher(FleetState, 'fleet_states')
+        self.status_pub = self.create_publisher(FleetState, 'fleet_states', 1)
         self.pub_timer = self.create_timer(
             self.STATUS_PUB_RATE, self.pub_fleet
         )
@@ -168,10 +174,10 @@ class FleetDriverMir(Node):
 
         # Setup fleet driver ROS2 topic subscriptions
         self.path_request_sub = self.create_subscription(
-            PathRequest, '/robot_path_requests', self.on_path_request
+            PathRequest, '/robot_path_requests', self.on_path_request, 1
         )
         self.mode_sub = self.create_subscription(
-            ModeRequest, f'/robot_mode_requests', self.on_robot_mode_request
+            ModeRequest, f'/robot_mode_requests', self.on_robot_mode_request, 1
         )
 
     def pub_fleet(self):
@@ -198,24 +204,20 @@ class FleetDriverMir(Node):
                 rmf_location = Location()
                 rmf_location.x = rmf_pos[0]
                 rmf_location.y = rmf_pos[1]
-                rmf_location.yaw = location.yaw
+                rmf_location.yaw = (
+                    location.yaw + self.mir2rmf_transform.get_rotation()
+                )
                 robot_state.location = rmf_location
                 robot_state.path = robot.remaining_path
                 robot_state.location.t.sec = now_sec
                 robot_state.location.t.nanosec = now_ns
 
-                m = RobotMode()
+                robot_state.mode = robot.mode
 
                 if api_response.mission_text.startswith('Charging'):
-                    m.mode = RobotMode.MODE_CHARGING
-                    robot_state.mode = m
+                    robot_state.mode.mode = RobotMode.MODE_CHARGING
                 elif api_response.state_id == MirState.PAUSE:
-                    m.mode = RobotMode.MODE_PAUSED
-                    robot_state.mode = m
-                else:
-                    self.get_logger().info(f'status_text: \
-                                           {api_response.mission_text}')
-                    # raise ValueError('unknown robot mode')
+                    robot_state.mode.mode = RobotMode.MODE_PAUSED
                 fleet_state.robots.append(robot_state)
 
             self.status_pub.publish(fleet_state)
@@ -225,8 +227,18 @@ class FleetDriverMir(Node):
                                    DefaultApi->status_get: %s\n' %e)
 
     def on_robot_mode_request(self, msg):
-        self.get_logger().info(f'sending robot {msg.robot_name} mode to {msg.mode}')
         robot = self.robots[msg.robot_name]
+        if not robot:
+            self.get_logger().info(f'Could not find a robot named [{msg.robot_name}]')
+            return
+
+        if robot.current_task_id == msg.task_id:
+            self.get_logger().info(f'Already following task [{msg.task_id}]')
+            return
+
+        robot.cancel_path()
+
+        self.get_logger().info(f'sending robot {msg.robot_name} mode to {msg.mode}')
         # Find the mission
         try:
             if msg.parameters[0].name == 'docking':
@@ -256,6 +268,10 @@ class FleetDriverMir(Node):
 
         # Abort the current mission and all pending missions
         robot = self.robots[msg.robot_name]
+
+        if not robot:
+            self.get_logger().info(f'Could not find robot with the name [{msg.robot_name}]')
+            return
 
         if robot.current_task_id == msg.task_id:
             self.get_logger().info(f'Already received task [{msg.task_id}].')
