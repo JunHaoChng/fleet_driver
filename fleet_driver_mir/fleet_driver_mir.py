@@ -10,7 +10,7 @@ import nudged
 
 import mir100_client
 from mir100_client.rest import ApiException
-from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions
+from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions, PutStatus
 import urllib3
 
 import rclpy
@@ -18,6 +18,7 @@ from rclpy.node import Node
 
 from rmf_fleet_msgs.msg import PathRequest, ModeRequest, RobotState, FleetState, \
     Location, RobotMode, ModeParameter
+
 
 class Robot():
     def __init__(self, parent):
@@ -227,7 +228,7 @@ class FleetDriverMir(Node):
                                    DefaultApi->status_get: %s\n' %e)
 
     def on_robot_mode_request(self, msg):
-        robot = self.robots[msg.robot_name]
+        robot = self.robots.get(msg.robot_name)
         if not robot:
             self.get_logger().info(f'Could not find a robot named [{msg.robot_name}]')
             return
@@ -235,19 +236,22 @@ class FleetDriverMir(Node):
         if robot.current_task_id == msg.task_id:
             self.get_logger().info(f'Already following task [{msg.task_id}]')
             return
+            
+        desired_mode = msg.mode.mode
+        if desired_mode in [2,3]:
+        #mapping
+                mir_mode_request_dict={2: MirState.READY,3:MirState.PAUSE} #manual is mir mode 11
+                status = PutStatus(state_id=mir_mode_request_dict[desired_mode])   
+                robot.api.status_put(status)
+                return
 
         robot.cancel_path()
 
         self.get_logger().info(f'sending robot {msg.robot_name} mode to {msg.mode}')
         # Find the mission
         try:
-            if msg.parameters[0].name == 'docking':
-                robot.mode = RobotMode.MODE_DOCKING
-
             mission_id = robot.missions[
                 f'{msg.parameters[0].name}_{msg.parameters[0].value}'].guid
-
-            robot.current_task_id = msg.task_id
         except KeyError:
             self.get_logger().error('Cannot find charging mission')
 
@@ -267,7 +271,7 @@ class FleetDriverMir(Node):
     def on_path_request(self, msg):
 
         # Abort the current mission and all pending missions
-        robot = self.robots[msg.robot_name]
+        robot = self.robots.get(msg.robot_name)
 
         if not robot:
             self.get_logger().info(f'Could not find robot with the name [{msg.robot_name}]')
