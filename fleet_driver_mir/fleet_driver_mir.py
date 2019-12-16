@@ -49,6 +49,7 @@ class Robot():
 
         if self._path_following_thread is not None:
             self._path_quit_event.set()
+            self._path_quit_cv.acquire()
             self._path_quit_cv.notify_all()
             self._path_following_thread.join()
 
@@ -73,7 +74,8 @@ class Robot():
                         return
 
                     next_mission_location = self.remaining_path[0]
-                    mir_p = self.parent.rmf2mir_transform(next_mission_location)
+                    mir_p = self.parent.rmf2mir_transform.transform(
+                        [next_mission_location.x, next_mission_location.y])
 
                     mir_location = Location()
                     mir_location.x = mir_p[0]
@@ -96,12 +98,14 @@ class Robot():
                         )
                     continue
 
+                self._path_quit_cv.acquire()
                 self._path_quit_cv.wait(next_mission_wait)
 
         self.remaining_path = msg.path
 
         self._path_quit_event.clear()
         self._path_following_thread = threading.Thread(target=path_following_closure)
+        self._path_following_thread.start()
 
 
 class MirState(enum.IntEnum):
@@ -213,8 +217,6 @@ class FleetDriverMir(Node):
                 robot_state.location.t.sec = now_sec
                 robot_state.location.t.nanosec = now_ns
 
-                robot_state.mode = robot.mode
-
                 if api_response.mission_text.startswith('Charging'):
                     robot_state.mode.mode = RobotMode.MODE_CHARGING
                 elif api_response.state_id == MirState.PAUSE:
@@ -260,7 +262,7 @@ class FleetDriverMir(Node):
             return
 
         # Find the mission
-        mission_str = f'{msg.parameters[0].name}_{mas.parameters[0].value}'
+        mission_str = f'{msg.parameters[0].name}_{msg.parameters[0].value}'
         self.get_logger().info(f'Attempting to send mission [{mission_str}] to robot [{msg.robot_name}]')
         try:
             mission_id = robot.missions[mission_str].guid
@@ -275,15 +277,12 @@ class FleetDriverMir(Node):
         except KeyError:
             self.get_logger().error('Error when posting charging mission')
 
-
     def calculate_path_request_yaw(self, location_request, location_request_next):
         dx = location_request_next.x - location_request.x
         dy = location_request_next.y - location_request.y
         return math.atan2(dy, dx)
 
     def on_path_request(self, msg):
-
-        # Abort the current mission and all pending missions
         robot = self.robots.get(msg.robot_name)
 
         if not robot:
@@ -296,7 +295,6 @@ class FleetDriverMir(Node):
 
         self.get_logger().info(f'Issuing task [{msg.task_id}] to robot [{msg.robot_name}]')
         robot.follow_new_path(msg)
-
 
     def load_missions(self, robot):
         self.get_logger().info('retrieving missions...')
