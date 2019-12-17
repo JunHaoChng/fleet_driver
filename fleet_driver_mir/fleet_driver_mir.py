@@ -51,6 +51,7 @@ class Robot():
             self._path_quit_event.set()
             self._path_quit_cv.acquire()
             self._path_quit_cv.notify_all()
+            self._path_quit_cv.release()
             self._path_following_thread.join()
 
         self.api.mission_queue_delete()
@@ -67,6 +68,8 @@ class Robot():
                 next_mission_time = next_ros_time.sec + next_ros_time.nanosec/1e9
 
                 next_mission_wait = next_mission_time - time.time()
+                print(f'next_mission_time: {next_mission_time}, \
+                      next_mission_wait: {next_mission_wait}')
                 if next_mission_wait <= 0:
                     self.remaining_path.pop(0)
 
@@ -100,6 +103,7 @@ class Robot():
 
                 self._path_quit_cv.acquire()
                 self._path_quit_cv.wait(next_mission_wait)
+                self._path_quit_cv.release()
 
         self.remaining_path = msg.path
 
