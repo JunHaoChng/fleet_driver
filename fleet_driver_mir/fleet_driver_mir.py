@@ -51,12 +51,14 @@ class Robot():
             self._path_quit_event.set()
             self._path_quit_cv.acquire()
             self._path_quit_cv.notify_all()
+            self._path_quit_cv.release()
             self._path_following_thread.join()
 
         self.api.mission_queue_delete()
 
 
     def follow_new_path(self, msg):
+        self.current_task_id = msg.task_id
         self.cancel_path()
         self.mode = RobotMode.MODE_MOVING
 
@@ -67,6 +69,8 @@ class Robot():
                 next_mission_time = next_ros_time.sec + next_ros_time.nanosec/1e9
 
                 next_mission_wait = next_mission_time - time.time()
+                print(f'next_mission_time: {next_mission_time}, \
+                      next_mission_wait: {next_mission_wait}')
                 if next_mission_wait <= 0:
                     self.remaining_path.pop(0)
 
@@ -100,6 +104,7 @@ class Robot():
 
                 self._path_quit_cv.acquire()
                 self._path_quit_cv.wait(next_mission_wait)
+                self._path_quit_cv.release()
 
         self.remaining_path = msg.path
 
@@ -124,7 +129,7 @@ class MirPositionTypes(enum.IntEnum):
 
 class FleetDriverMir(Node):
     FLEET_NAME = 'mir100'
-    STATUS_PUB_RATE = 0.1
+    STATUS_PUB_RATE = 1
 
     def __init__(self, fleet_config):
         super().__init__('fleet_driver_mir')
@@ -239,6 +244,7 @@ class FleetDriverMir(Node):
             self.get_logger().info(f'Already following task [{msg.task_id}]')
             return
 
+
         robot.cancel_path()
 
         # Mapping from RMF modes to MiR modes
@@ -261,6 +267,7 @@ class FleetDriverMir(Node):
             )
             return
 
+
         # Find the mission
         mission_str = f'{msg.parameters[0].name}_{msg.parameters[0].value}'
         self.get_logger().info(f'Attempting to send mission [{mission_str}] to robot [{msg.robot_name}]')
@@ -276,6 +283,9 @@ class FleetDriverMir(Node):
             robot.api.mission_queue_post(mission)
         except KeyError:
             self.get_logger().error('Error when posting charging mission')
+            return
+
+        robot.current_task_id = msg.task_id
 
     def calculate_path_request_yaw(self, location_request, location_request_next):
         dx = location_request_next.x - location_request.x
