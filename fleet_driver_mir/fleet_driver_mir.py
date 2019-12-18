@@ -146,9 +146,9 @@ class FleetDriverMir(Node):
             self.STATUS_PUB_RATE, self.pub_fleet
         )
         self.ref_coordinates_rmf = [[26.95, -20.23], [29.26, -22.38], [11.4, -16.48],
-                                    [14.41, -24.89], [12.46, -16.99]]
+                                    [12.46, -16.99]]
         self.ref_coordinates_mir = [[7.2, 16.6], [5.15, 18.35], [23, 12.35],
-                                    [20.8, 20.35], [22.05, 12.95]]
+                                    [22.05, 12.95]]
         self.rmf2mir_transform = nudged.estimate(
             self.ref_coordinates_rmf,
             self.ref_coordinates_mir
@@ -157,6 +157,10 @@ class FleetDriverMir(Node):
             self.ref_coordinates_mir,
             self.ref_coordinates_rmf
         )
+        mse = nudged.estimate_error(self.rmf2mir_transform,
+                                    self.ref_coordinates_rmf,
+                                    self.ref_coordinates_mir)
+        self.get_logger().info(f'transformation estimate error: {mse}')
 
         for api_client in self.create_all_api_clients(self.fleet_config):
             self.get_logger().info(f'initializing robot from \
