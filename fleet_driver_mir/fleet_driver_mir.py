@@ -59,7 +59,9 @@ class Robot():
 
         self.api.mission_queue_delete()
 
-
+###################################################################
+# follow_new_path
+###################################################################
     def follow_new_path(self, msg):
         print("Following new path")
         self.current_task_id = msg.task_id
@@ -78,7 +80,7 @@ class Robot():
                       next_mission_wait: {next_mission_wait}')
                 print(self.remaining_path)
 
-                #self.
+                
                 api_response = robot.api.status_get()
                 location.x = api_response.position.x
                 location.y = api_response.position.y
@@ -113,6 +115,8 @@ class Robot():
                         mir_location.yaw = yaw + 180.0
                     self.goal_location = mir_location
                     print(f'location: {mir_location}')
+                    #Check whether position is in position list
+
                     self.parent.create_robot_position(self, mir_location, 'L1')
                     mission_id = self.parent.create_move_coordinate_mission(
                         self, mir_location
@@ -354,7 +358,7 @@ class FleetDriverMir(Node):
     def create_move_coordinate_mission(self, robot, location, retries=10):
         mission = PostMissions(
             group_id='mirconst-guid-0000-0001-missiongroup',
-            name=f'move_coordinate_to_{location.x:.3f}_{location.y:.3f}',
+            name=f'move_coordinate_to_{location.x:.3f}_{location.y:.3f}_{location.yaw:.3f}',
             description='automatically created by mir fleet adapter',
         )
         response = robot.api.missions_post(mission)
@@ -457,6 +461,7 @@ class FleetDriverMir(Node):
                         pos.type_id == MirPositionTypes.CHARGING_STATION_ENTRY:
                     robot.positions[pos.name] = robot.api.positions_guid_get(pos.guid)
                     count += 1
+                    print("position: {}".format(pos.name))
         self.get_logger().info(f'updated {count} positions')
 
     def create_all_api_clients(self, config):
