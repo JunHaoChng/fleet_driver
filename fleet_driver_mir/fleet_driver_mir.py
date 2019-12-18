@@ -19,6 +19,8 @@ from rclpy.node import Node
 from rmf_fleet_msgs.msg import PathRequest, ModeRequest, RobotState, FleetState, \
     Location, RobotMode, ModeParameter
 
+from geometry_msgs.msg import PoseStamped
+
 
 class Robot():
     def __init__(self, parent):
@@ -36,6 +38,7 @@ class Robot():
         self.mode = None
         self.current_task_id = 'idle'
         self.remaining_path = []
+        self.goal_location=None
 
         # Variables for managing the path queue execution thread
         self._path_following_thread = None
@@ -58,6 +61,7 @@ class Robot():
 
 
     def follow_new_path(self, msg):
+        print("Following new path")
         self.current_task_id = msg.task_id
         self.cancel_path()
         self.mode = RobotMode.MODE_MOVING
@@ -68,15 +72,30 @@ class Robot():
                 next_ros_time = self.remaining_path[0].t
                 next_mission_time = next_ros_time.sec + next_ros_time.nanosec/1e9
 
+
                 next_mission_wait = next_mission_time - time.time()
                 print(f'next_mission_time: {next_mission_time}, \
                       next_mission_wait: {next_mission_wait}')
-                if next_mission_wait <= 0:
+                print(self.remaining_path)
+
+                #self.
+                api_response = robot.api.status_get()
+                location.x = api_response.position.x
+                location.y = api_response.position.y
+                if self.goal_location is not None:
+                    diff_x = api_response.position.x - self.goal_location.x
+                    diff_y = api_response.position.y - self.goal_location.y
+                    tol = math.sqrt(pow(diff_x,2)+(diff_y,2))
+                if next_mission_wait <= 0 and (self.goal_location is None or tol<0.1):
                     self.remaining_path.pop(0)
+                    print(self.remaining_path)
+                    print("Im dealing with this point now::")
 
                     if not self.remaining_path:
                         return
 
+
+                    print(self.remaining_path[0])
                     next_mission_location = self.remaining_path[0]
                     mir_p = self.parent.rmf2mir_transform.transform(
                         [next_mission_location.x, next_mission_location.y])
@@ -92,7 +111,7 @@ class Robot():
                         mir_location.yaw = yaw - 180.0
                     elif yaw <= -180.0:
                         mir_location.yaw = yaw + 180.0
-
+                    self.goal_location = mir_location
                     print(f'location: {mir_location}')
                     self.parent.create_robot_position(self, mir_location, 'L1')
                     mission_id = self.parent.create_move_coordinate_mission(
@@ -143,6 +162,7 @@ class FleetDriverMir(Node):
         self.robots = {}
         self.api_clients = []
         self.status_pub = self.create_publisher(FleetState, 'fleet_states', 1)
+        self.temp_pub = self.create_publisher(PoseStamped, 'mir_temp_pose', 1)
         self.pub_timer = self.create_timer(
             self.STATUS_PUB_RATE, self.pub_fleet
         )
@@ -225,10 +245,18 @@ class FleetDriverMir(Node):
                 rmf_location = Location()
                 rmf_location.x = rmf_pos[0]
                 rmf_location.y = rmf_pos[1]
+                #@@@@@@TOB REMOVED
+                temp_pose = PoseStamped()
+                temp_pose.header.frame_id = "map"
+                temp_pose.pose.position.x = rmf_pos[0]
+                temp_pose.pose.position.y = rmf_pos[1]
+                #@@@@@@@@@@@@@@@@@@@@@@
                 rmf_location.yaw = (
                     location.yaw + self.mir2rmf_transform.get_rotation()
                 )
                 robot_state.location = rmf_location
+                print("@@@@@@@@@@@@@@@@@@@@@@@@@@PUBLISHING FLEET STATE@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                print(robot.remaining_path)
                 robot_state.path = robot.remaining_path
                 robot_state.location.t.sec = now_sec
                 robot_state.location.t.nanosec = now_ns
@@ -238,8 +266,9 @@ class FleetDriverMir(Node):
                 elif api_response.state_id == MirState.PAUSE:
                     robot_state.mode.mode = RobotMode.MODE_PAUSED
                 fleet_state.robots.append(robot_state)
-
+            #print(fleet_state)
             self.status_pub.publish(fleet_state)
+            self.temp_pub.publish(temp_pose)
 
         except ApiException as e:
             self.get_logger().warn('Exception when calling \
