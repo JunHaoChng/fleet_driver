@@ -10,7 +10,7 @@ import nudged
 
 import mir100_client
 from mir100_client.rest import ApiException
-from mir100_client.models import PostMissionQueues, PostMissions, PostMissionActions, PutStatus
+from mir100_client.models import PostMissionQueues, PostPositions, PostMissions, PostMissionActions, PutStatus
 import urllib3
 
 import rclpy
@@ -94,6 +94,7 @@ class Robot():
                         mir_location.yaw = yaw + 180.0
 
                     print(f'location: {mir_location}')
+                    self.parent.create_robot_position(self, mir_location, 'L1')
                     mission_id = self.parent.create_move_coordinate_mission(
                         self, mir_location
                     )
@@ -180,6 +181,7 @@ class FleetDriverMir(Node):
             robot.name = mir_status.robot_name
 
             self.load_missions(robot)
+            self.load_maps(robot)
             self.update_positions(robot)
             # reset retries
             if orig_retries is not None:
@@ -397,6 +399,25 @@ class FleetDriverMir(Node):
         )
         self.get_logger().info(f'created mission to move to "{place_name}"')
         return response.guid
+
+    def load_maps(self, robot):
+        self.get_logger().info('retrieving maps...')
+        robot.mir_maps = {m.name: m for m in robot.api.maps_get()}
+        self.get_logger().info(f'retrieved {len(robot.mir_maps)} maps')
+
+    def create_robot_position(self, robot, location, map_name):
+        type_id = int(MirPositionTypes.ROBOT)
+        pos = PostPositions(
+            map_id=robot.mir_maps[map_name].guid,
+            name=f'{location.x:.2f}_{location.y:.2f}',
+            orientation=location.yaw,
+            pos_x=location.x,
+            pos_y=location.y,
+            type_id=type_id)
+        robot.api.positions_post(pos)
+        self.get_logger().info(f'"name" created at '
+                            f'({pos.pos_x:.3f}, {pos.pos_y:.3f}, {pos.orientation:.3f})')
+        return True
 
     def update_positions(self, robot):
         self.get_logger().info('retrieving positions...')
