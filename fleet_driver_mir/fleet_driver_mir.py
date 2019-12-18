@@ -39,6 +39,7 @@ class Robot():
         self.current_task_id = 'idle'
         self.remaining_path = []
         self.goal_location=None
+        self.immediate_mission_id=None
 
         # Variables for managing the path queue execution thread
         self._path_following_thread = None
@@ -67,6 +68,7 @@ class Robot():
         self.current_task_id = msg.task_id
         self.cancel_path()
         self.mode = RobotMode.MODE_MOVING
+        print("follow_new_path() called")
 
         def path_following_closure():
             # This function defines a worker thread that will wakeup at whatever times are needed
@@ -78,19 +80,16 @@ class Robot():
                 next_mission_wait = next_mission_time - time.time()
                 print(f'next_mission_time: {next_mission_time}, \
                       next_mission_wait: {next_mission_wait}')
-                print(self.remaining_path)
+                for j,k in enumerate(self.remaining_path):
+                    print(j,k)
 
-                
-                api_response = robot.api.status_get()
-                location.x = api_response.position.x
-                location.y = api_response.position.y
-                if self.goal_location is not None:
-                    diff_x = api_response.position.x - self.goal_location.x
-                    diff_y = api_response.position.y - self.goal_location.y
-                    tol = math.sqrt(pow(diff_x,2)+(diff_y,2))
-                if next_mission_wait <= 0 and (self.goal_location is None or tol<0.1):
-                    self.remaining_path.pop(0)
-                    print(self.remaining_path)
+                latest_mission=self.api.mission_queue_get()[:-1][-1]
+                print("Printing latest mission results")
+                print(latest_mission)
+                latest_mission_status= latest_mission.state
+                #if the fleet driver sends a mission, check for it's completion
+                #Check if latest using the latest mission guid if that mission is done
+                if next_mission_wait <= 0 and (self.immediate_mission_id is None or latest_mission_status=="Done"):
                     print("Im dealing with this point now::")
 
                     if not self.remaining_path:
@@ -124,7 +123,8 @@ class Robot():
 
                     try:
                         mission = PostMissionQueues(mission_id=mission_id)
-                        self.api.mission_queue_post(mission)
+                        mission_post_response = self.api.mission_queue_post(mission)
+                        self.immediate_mission_id = mission_post_response.id
                     except KeyError:
                         self.parent.get_logger().error(
                             f'no mission to move coordinates to [{mir_location.x:3f}_{mir_location.y:.3f}]!'
@@ -260,7 +260,7 @@ class FleetDriverMir(Node):
                 )
                 robot_state.location = rmf_location
                 print("@@@@@@@@@@@@@@@@@@@@@@@@@@PUBLISHING FLEET STATE@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-                print(robot.remaining_path)
+                #print(robot.remaining_path)
                 robot_state.path = robot.remaining_path
                 robot_state.location.t.sec = now_sec
                 robot_state.location.t.nanosec = now_ns
