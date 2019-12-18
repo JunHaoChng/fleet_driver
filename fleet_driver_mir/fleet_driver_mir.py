@@ -115,11 +115,18 @@ class Robot():
                     self.goal_location = mir_location
                     print(f'location: {mir_location}')
                     #Check whether position is in position list
+                    if f'{mir_location.x:.2f}_{mir_location.y:.2f}_{mir_location.yaw:.2f}' not in self.positions:
+                        self.parent.create_robot_position(self, mir_location, 'L1')
 
-                    self.parent.create_robot_position(self, mir_location, 'L1')
-                    mission_id = self.parent.create_move_coordinate_mission(
-                        self, mir_location
-                    )
+                    #Check whether mission is in mission list
+                    mission_name= f'move_coordinate_to_{mir_location.x:.2f}_{mir_location.y:.2f}_{mir_location.yaw:.2f}'
+                    if mission_name not in self.missions:
+                        print(f'Creating a new mission named {mission_name}')
+                        mission_id = self.parent.create_move_coordinate_mission(self, mir_location)
+                    else:
+                        mission_id = self.missions[mission_name]
+
+
 
                     try:
                         mission = PostMissionQueues(mission_id=mission_id)
@@ -442,7 +449,7 @@ class FleetDriverMir(Node):
         type_id = int(MirPositionTypes.ROBOT)
         pos = PostPositions(
             map_id=robot.mir_maps[map_name].guid,
-            name=f'{location.x:.2f}_{location.y:.2f}',
+            name=f'{location.x:.2f}_{location.y:.2f}_{location.y:.2f}',
             orientation=location.yaw,
             pos_x=location.x,
             pos_y=location.y,
