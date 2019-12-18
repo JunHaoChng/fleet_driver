@@ -349,6 +349,11 @@ class FleetDriverMir(Node):
     def load_missions(self, robot):
         self.get_logger().info('retrieving missions...')
         robot.missions = {m.name: m for m in robot.api.missions_get()}
+        robot_missions_ls = robot.api.missions_get()
+        for i in robot_missions_ls:
+            if "move_coordinate" in i.name:
+                print("removing {}".format(i.name))
+                robot.api.missions_guid_delete(i.guid)
         self.get_logger().info(f'retrieved {len(robot.missions)} missions')
 
     def create_move_coordinate_mission(self, robot, location, retries=10):
