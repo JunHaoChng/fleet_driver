@@ -84,11 +84,16 @@ class Robot():
                     mir_location = Location()
                     mir_location.x = mir_p[0]
                     mir_location.y = mir_p[1]
-                    mir_location.yaw = (
+                    yaw = math.degrees(
                         next_mission_location.yaw
                         + self.parent.rmf2mir_transform.get_rotation()
                     )
+                    if yaw > 180.0:
+                        mir_location.yaw = yaw - 180.0
+                    elif yaw <= -180.0:
+                        mir_location.yaw = yaw + 180.0
 
+                    print(f'location: {mir_location}')
                     mission_id = self.parent.create_move_coordinate_mission(
                         self, mir_location
                     )
