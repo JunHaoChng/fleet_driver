@@ -20,7 +20,7 @@ from rmf_fleet_msgs.msg import PathRequest, ModeRequest, RobotState, FleetState,
     Location, RobotMode, ModeParameter
 
 from geometry_msgs.msg import PoseStamped
-
+import string
 
 class Robot():
     def __init__(self, parent):
@@ -113,7 +113,7 @@ class Robot():
                         mir_location.yaw = yaw + 180.0
                     self.goal_location = mir_location
                     print(f'location: {mir_location}')
-                    self.parent.create_robot_position(self, mir_location, 'L1')
+                    #self.parent.create_robot_position(self, mir_location, 'L1')
                     mission_id = self.parent.create_move_coordinate_mission(
                         self, mir_location
                     )
@@ -451,11 +451,15 @@ class FleetDriverMir(Node):
     def update_positions(self, robot):
         self.get_logger().info('retrieving positions...')
         count = 0
-        for pos in robot.api.positions_get():
-            if pos.name not in robot.positions or pos.guid != robot.positions[pos.name].guid:
-                if pos.type_id == MirPositionTypes.ROBOT or \
-                        pos.type_id == MirPositionTypes.CHARGING_STATION_ENTRY:
-                    robot.positions[pos.name] = robot.api.positions_guid_get(pos.guid)
+        position_ls=robot.api.positions_get()
+        for pos_index in range(len(position_ls)-1):
+            if set(position_ls[pos_index].name).issubset(set(string.digits+"_"+".")) :
+                print("Trying to delete {} with guid {}".format(position_ls[pos_index].name,position_ls[pos_index].guid))
+                robot.api.positions_guid_delete(position_ls[pos_index].guid)
+            elif position_ls[pos_index].name not in robot.positions or position_ls[pos_index].guid != robot.positions[position_ls[pos_index].name].guid:
+                if position_ls[pos_index].type_id == MirPositionTypes.ROBOT or \
+                        position_ls[pos_index].type_id == MirPositionTypes.CHARGING_STATION_ENTRY:
+                    robot.positions[position_ls[pos_index].name] = robot.api.positions_guid_get(position_ls[pos_index].guid)
                     count += 1
         self.get_logger().info(f'updated {count} positions')
 
