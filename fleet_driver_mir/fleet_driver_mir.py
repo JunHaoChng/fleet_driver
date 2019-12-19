@@ -66,6 +66,10 @@ class Robot():
         self.current_task_id = msg.task_id
         self.cancel_path()
 
+        # Set MiR state from PAUSE (if) to READY everytime receives new path
+        # pick up from commit 15b2bfc
+        self.api.status_put(state_id = MirState.READY)
+
         def path_following_closure():
             # This function defines a worker thread that will wakeup at whatever times are needed
             while (not self._path_quit_event.is_set()) and self.remaining_path:
@@ -259,8 +263,6 @@ class FleetDriverMir(Node):
                     else:
                         robot_state.mode.mode = RobotMode.MODE_DOCKING
 
-
-                # print(f'status: {api_response.state_id}, {api_response.state_text}')
             self.status_pub.publish(fleet_state)
 
         except ApiException as e:
