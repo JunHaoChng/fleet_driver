@@ -60,7 +60,6 @@ class Robot():
     def follow_new_path(self, msg):
         self.current_task_id = msg.task_id
         self.cancel_path()
-        self.mode = RobotMode.MODE_MOVING
 
         def path_following_closure():
             # This function defines a worker thread that will wakeup at whatever times are needed
@@ -69,9 +68,9 @@ class Robot():
                 next_mission_time = next_ros_time.sec + next_ros_time.nanosec/1e9
 
                 next_mission_wait = next_mission_time - time.time()
-                print(f'next_mission_time: {next_mission_time}, \
-                      next_mission_wait: {next_mission_wait}')
-                if next_mission_wait <= 0:
+                # print(f'next_mission_time: {next_mission_time}, \
+                #       next_mission_wait: {next_mission_wait}')
+                if next_mission_wait <= 0 and self.mode == MirState.READY:
                     self.remaining_path.pop(0)
 
                     if not self.remaining_path:
@@ -134,7 +133,7 @@ class MirPositionTypes(enum.IntEnum):
 
 class FleetDriverMir(Node):
     FLEET_NAME = 'mir100'
-    STATUS_PUB_RATE = 1
+    STATUS_PUB_RATE = 10
 
     def __init__(self, fleet_config):
         super().__init__('fleet_driver_mir')
@@ -233,10 +232,20 @@ class FleetDriverMir(Node):
 
                 if api_response.mission_text.startswith('Charging'):
                     robot_state.mode.mode = RobotMode.MODE_CHARGING
+                    robot.mode = MirState.CHARGING
                 elif api_response.state_id == MirState.PAUSE:
                     robot_state.mode.mode = RobotMode.MODE_PAUSED
+                    robot.mode = MirState.PAUSE
+                elif api_response.state_id == MirState.EXECUTING and \
+                    not api_response.mission_text.startswith('Charging'):
+                    robot_state.mode.mode = RobotMode.MODE_MOVING
+                    robot.mode = MirState.EXECUTING
+                elif api_response.state_id == MirState.READY:
+                    robot_state.mode.mode = RobotMode.MODE_IDLE
+                    robot.mode = MirState.READY
                 fleet_state.robots.append(robot_state)
 
+                print(f'status: {api_response.state_id}, {api_response.state_text}')
             self.status_pub.publish(fleet_state)
 
         except ApiException as e:
