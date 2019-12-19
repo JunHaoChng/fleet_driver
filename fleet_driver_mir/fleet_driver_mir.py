@@ -37,6 +37,9 @@ class Robot():
         self.current_task_id = 'idle'
         self.remaining_path = []
 
+        self.docking_executed = False
+        self.docking_requested = False
+
         # Variables for managing the path queue execution thread
         self._path_following_thread = None
         self._path_quit_event = threading.Event()
@@ -58,6 +61,8 @@ class Robot():
 
 
     def follow_new_path(self, msg):
+        self.docking_requested = False
+        self.docking_executed = False
         self.current_task_id = msg.task_id
         self.cancel_path()
 
@@ -70,7 +75,7 @@ class Robot():
                 next_mission_wait = next_mission_time - time.time()
                 # print(f'next_mission_time: {next_mission_time}, \
                 #       next_mission_wait: {next_mission_wait}')
-                if next_mission_wait <= 0 and self.mode == MirState.READY:
+                if next_mission_wait <= 0 and self.mode == MirState.READY and self.remaining_path:
                     self.remaining_path.pop(0)
 
                     if not self.remaining_path:
@@ -133,7 +138,7 @@ class MirPositionTypes(enum.IntEnum):
 
 class FleetDriverMir(Node):
     FLEET_NAME = 'mir100'
-    STATUS_PUB_RATE = 10
+    STATUS_PUB_RATE = 1.0/10.0
 
     def __init__(self, fleet_config):
         super().__init__('fleet_driver_mir')
@@ -222,9 +227,7 @@ class FleetDriverMir(Node):
                 rmf_location = Location()
                 rmf_location.x = rmf_pos[0]
                 rmf_location.y = rmf_pos[1]
-                rmf_location.yaw = (
-                    location.yaw + self.mir2rmf_transform.get_rotation()
-                )
+                rmf_location.yaw = math.radians(location.yaw) + self.mir2rmf_transform.get_rotation()
                 robot_state.location = rmf_location
                 robot_state.path = robot.remaining_path
                 robot_state.location.t.sec = now_sec
@@ -243,9 +246,21 @@ class FleetDriverMir(Node):
                 elif api_response.state_id == MirState.READY:
                     robot_state.mode.mode = RobotMode.MODE_IDLE
                     robot.mode = MirState.READY
+
+                # print(f'[{api_response.state_id}] [{api_response.state_text}] [{api_response.mission_text}]')
                 fleet_state.robots.append(robot_state)
 
-                print(f'status: {api_response.state_id}, {api_response.state_text}')
+                if robot.docking_requested:
+                    if not robot.docking_executed:
+                        robot.docking_executed = ('docking' in api_response.mission_text.lower())
+
+                    if robot.docking_executed and api_response.state_id == MirState.READY:
+                        robot_state.mode.mode = RobotMode.MODE_IDLE
+                    else:
+                        robot_state.mode.mode = RobotMode.MODE_DOCKING
+
+
+                # print(f'status: {api_response.state_id}, {api_response.state_text}')
             self.status_pub.publish(fleet_state)
 
         except ApiException as e:
@@ -302,6 +317,12 @@ class FleetDriverMir(Node):
         except KeyError:
             self.get_logger().error('Error when posting charging mission')
             return
+
+        if msg.parameters[0].name == 'docking':
+            robot.docking_requested = True
+            robot.docking_executed = False
+            print(' === We are in docking mode')
+
 
         robot.current_task_id = msg.task_id
 
