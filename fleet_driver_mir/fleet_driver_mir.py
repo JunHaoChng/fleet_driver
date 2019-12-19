@@ -143,7 +143,7 @@ class MirPositionTypes(enum.IntEnum):
 
 class FleetDriverMir(Node):
     FLEET_NAME = 'mir100'
-    STATUS_PUB_RATE = 1.0/10.0
+    STATUS_PUB_PERIOD = 1.0
 
     def __init__(self, fleet_config):
         super().__init__('fleet_driver_mir')
@@ -152,7 +152,7 @@ class FleetDriverMir(Node):
         self.api_clients = []
         self.status_pub = self.create_publisher(FleetState, 'fleet_states', 1)
         self.pub_timer = self.create_timer(
-            self.STATUS_PUB_RATE, self.pub_fleet
+            self.STATUS_PUB_PERIOD, self.pub_fleet
         )
         self.ref_coordinates_rmf = [[26.95, -20.23], [29.26, -22.38], [11.4, -16.48],
                                     [12.46, -16.99]]
@@ -240,7 +240,7 @@ class FleetDriverMir(Node):
 
                 if api_response.mission_text.startswith('Charging'):
                     robot_state.mode.mode = RobotMode.MODE_CHARGING
-                    robot.mode = MirState.CHARGING
+                    robot.mode = MirState.READY
                 elif api_response.state_id == MirState.PAUSE:
                     robot_state.mode.mode = RobotMode.MODE_PAUSED
                     robot.mode = MirState.PAUSE
