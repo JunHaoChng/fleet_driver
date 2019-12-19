@@ -68,7 +68,6 @@ class Robot():
 
         # Set MiR state from PAUSE (if) to READY everytime receives new path
         # pick up from commit 15b2bfc
-
         status = PutStatus(state_id = MirState.READY)
         self.api.status_put(status)
 
