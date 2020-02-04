@@ -106,9 +106,13 @@ class Robot():
                     mir_location.yaw = yaw
 
                     print(f'location: {mir_location}')
-                    mission_id = self.parent.create_move_coordinate_mission(
-                        self, mir_location
-                    )
+                    #Check whether mission is in mission list
+                    mission_name= f'move_coordinate_to_{mir_location.x:.2f}_{mir_location.y:.2f}_{mir_location.yaw:.2f}'
+                    if mission_name not in self.missions:
+                        print(f'Creating a new mission named {mission_name}')
+                        mission_id = self.parent.create_move_coordinate_mission(self, mir_location)
+                    else:
+                        mission_id = self.missions[mission_name]
 
                     try:
                         mission = PostMissionQueues(mission_id=mission_id)
@@ -353,7 +357,15 @@ class FleetDriverMir(Node):
 
     def load_missions(self, robot):
         self.get_logger().info('retrieving missions...')
-        robot.missions = {m.name: m for m in robot.api.missions_get()}
+        robot_missions_ls = robot.api.missions_get()
+        for i in robot_missions_ls:
+            if i.name not in robot.missions:
+                robot.missions[i.name]=i
+            else:
+                if "move_coordinate" in i.name:
+                    print("removing {}".format(i.name))
+                    robot.api.missions_guid_delete(i.guid)
+
         self.get_logger().info(f'retrieved {len(robot.missions)} missions')
 
     def create_move_coordinate_mission(self, robot, location, retries=10):
