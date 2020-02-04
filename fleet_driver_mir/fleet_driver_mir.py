@@ -97,7 +97,7 @@ class Robot():
                         next_mission_location.yaw
                         + self.parent.rmf2mir_transform.get_rotation()
                     )
-
+                    print(f'RMF location x:{next_mission_location.x} y:{next_mission_location.y}')
                     if yaw > 180.0:
                         yaw = yaw - 360.0
                     elif yaw <= -180.0:
