@@ -19,6 +19,6 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': ['fleet_driver_mir=fleet_driver_mir.fleet_driver_mir:main'],
+        'console_scripts': ['fleet_driver_mir=fleet_driver_mir.fleet_driver_mir:main','remove_mc=fleet_driver_mir.remove_move_coordinate:main'],
     },
 )
