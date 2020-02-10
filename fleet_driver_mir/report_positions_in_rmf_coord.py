@@ -7,6 +7,7 @@ import argparse
 import json
 import threading
 import nudged
+from datetime import datetime
 
 import mir100_client
 from mir100_client.rest import ApiException
@@ -447,14 +448,23 @@ class FleetDriverMir(Node):
     def update_positions(self, robot):
         self.get_logger().info('retrieving positions...')
         count = 0
-        for pos in robot.api.positions_get():
-            if pos.name not in robot.positions or pos.guid != robot.positions[pos.name].guid:
-                if pos.type_id == MirPositionTypes.ROBOT or \
-                        pos.type_id == MirPositionTypes.CHARGING_STATION_ENTRY:
-                    robot.positions[pos.name] = robot.api.positions_guid_get(pos.guid)
-                    count += 1
-                    #print position name and coordinates including yaw
-                    print(robot.api.positions_guid_get(pos.guid))
+        
+        now=datetime.now()
+        stamp = now.strftime("%y%m%d_%H%M")
+        stamp = "mir_positions_transformed_"+stamp
+        big_dict=[]
+        with open(stamp+".json","w+") as f:        
+            for pos in robot.api.positions_get():
+                if pos.name not in robot.positions or pos.guid != robot.positions[pos.name].guid:
+                    if pos.type_id == MirPositionTypes.ROBOT or \
+                            pos.type_id == MirPositionTypes.CHARGING_STATION_ENTRY:
+                        robot.positions[pos.name] = robot.api.positions_guid_get(pos.guid)
+                        count += 1
+                        pos_dict = robot.api.positions_guid_get(pos.guid)
+                        pos_dict = pos_dict.to_dict()
+                        pos_dict['rmf_x'],pos_dict['rmf_y'] = self.mir2rmf_transform.transform([pos_dict['pos_x'],pos_dict['pos_y']])
+                        big_dict.append(pos_dict)
+            json.dump(big_dict,f)
         self.get_logger().info(f'updated {count} positions')
 
     def create_all_api_clients(self, config):
@@ -485,7 +495,7 @@ def main():
     rclpy.init()
     node = FleetDriverMir(fleet_config)
     rclpy.spin(node)
-
+x
     node.destroy_node()
     rclpy.shutdown()
 
