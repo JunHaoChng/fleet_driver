@@ -1,4 +1,5 @@
 fleet_driver_mir/__pycache__/
 fleet_driver_mir/.ipynb_checkpoints/
+*.csv
 *.json
 *ipynb
