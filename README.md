@@ -24,11 +24,11 @@ To run the fleet driver, use the following command:
 
 ## Utilities
 
-Utilities were made and ran with python.
+Utilities were made in python.
 |Utility|Use|
 |---|---|
-|remove_move_coordinate.py|Removes the move_coordinate missions created by the driver fromthe MIR's memory.|
-|report_positions_in_rmf_coord.py|Saves all positions on the miinto a json file.|
+|remove_move_coordinate.py|Removes the move_coordinate missions created by the driver from the MIR.|
+|report_positions_in_rmf_coord.py|Saves all positions on the MIR into a json file.|
 |jsontocsv.py|Converts json into a csv for easy viewing|
 
 
