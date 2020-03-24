@@ -31,5 +31,3 @@ Utilities were made in python.
 |report_positions_in_rmf_coord.py|Saves all positions on the MIR into a json file.|
 |jsontocsv.py|Converts json into a csv for easy viewing|
 
-
-
