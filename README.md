@@ -16,11 +16,14 @@ The fleet driver subscribes to ros topics using the message types:
 
 and gives commands to the mir fleet.
 
-Each mir requires login details that are to be described in a json. (one is provided in fleet_driver_mir/; it is used as in the example)
+Each mir requires login details that are to be described in a json.
+
 
 To run the fleet driver, use the following command:
 
-`ros2 run fleet_driver_mir fleet_driver_mir fleet_driver_mir/mir_fleet_config_cgh_chart.json`
+`ros2 run fleet_driver_mir fleet_driver_mir <CONFIG_FILE>.json`
+
+sample format is provided in 'sample_config.json'
 
 ## Utilities
 

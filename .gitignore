@@ -4,3 +4,4 @@ fleet_driver_mir/mir_fleet_config_cgh_chart.json
 *.csv
 *.json
 *ipynb
+!sample_config.json

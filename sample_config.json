@@ -1,0 +1,18 @@
+{
+  "robots": [
+    {
+      "name": "name_used_by_Romi-H",
+      "base_url": "http://someurl",
+      "user": "some_user",
+      "password": "password_of_some_sort",
+      "starting_map": "L1"
+    }
+  ],
+  "maps": {
+     "L1": {
+        "ref_places": ["L1/door_west"]
+    }
+  },
+  "auto_create_missions": false,
+  "auto_create_positions": false
+}
