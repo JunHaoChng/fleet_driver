@@ -46,7 +46,6 @@ class Robot():
         self._path_quit_event = threading.Event()
         self._path_quit_cv = threading.Condition()
 
-
     def cancel_path(self):
         self.remaining_path.clear()
         self.mode = RobotMode.MODE_PAUSED
@@ -60,7 +59,6 @@ class Robot():
 
         self.api.mission_queue_delete()
 
-
     def follow_new_path(self, msg):
         self.docking_requested = False
         self.docking_executed = False
@@ -69,7 +67,7 @@ class Robot():
 
         # Set MiR state from PAUSE (if) to READY everytime receives new path
         # pick up from commit 15b2bfc
-        status = PutStatus(state_id = MirState.READY)
+        status = PutStatus(state_id=MirState.READY)
         self.api.status_put(status)
 
         def path_following_closure():
@@ -98,7 +96,8 @@ class Robot():
                         next_mission_location.yaw
                         + self.parent.rmf2mir_transform.get_rotation()
                     )
-                    print(f'RMF location x:{next_mission_location.x} y:{next_mission_location.y}')
+                    print(
+                        f'RMF location x:{next_mission_location.x} y:{next_mission_location.y}')
                     if yaw > 180.0:
                         yaw = yaw - 360.0
                     elif yaw <= -180.0:
@@ -107,11 +106,12 @@ class Robot():
                     mir_location.yaw = yaw
 
                     print(f'location: {mir_location}')
-                    #Check whether mission is in mission list
-                    mission_name= f'move_coordinate_to_{mir_location.x:.2f}_{mir_location.y:.2f}_{mir_location.yaw:.2f}'
+                    # Check whether mission is in mission list
+                    mission_name = f'move_coordinate_to_{mir_location.x:.2f}_{mir_location.y:.2f}_{mir_location.yaw:.2f}'
                     if mission_name not in self.missions:
                         print(f'Creating a new mission named {mission_name}')
-                        mission_id = self.parent.create_move_coordinate_mission(self, mir_location)
+                        mission_id = self.parent.create_move_coordinate_mission(
+                            self, mir_location)
                     else:
                         mission_id = self.missions[mission_name]
 
@@ -131,7 +131,8 @@ class Robot():
         self.remaining_path = msg.path
 
         self._path_quit_event.clear()
-        self._path_following_thread = threading.Thread(target=path_following_closure)
+        self._path_following_thread = threading.Thread(
+            target=path_following_closure)
         self._path_following_thread.start()
 
 
@@ -240,7 +241,8 @@ class FleetDriverMir(Node):
                 rmf_location = Location()
                 rmf_location.x = rmf_pos[0]
                 rmf_location.y = rmf_pos[1]
-                rmf_location.yaw = math.radians(location.yaw) + self.mir2rmf_transform.get_rotation()
+                rmf_location.yaw = math.radians(
+                    location.yaw) + self.mir2rmf_transform.get_rotation()
                 robot_state.location = rmf_location
                 robot_state.path = robot.remaining_path
                 robot_state.location.t.sec = now_sec
@@ -253,7 +255,7 @@ class FleetDriverMir(Node):
                     robot_state.mode.mode = RobotMode.MODE_PAUSED
                     robot.mode = MirState.PAUSE
                 elif api_response.state_id == MirState.EXECUTING and \
-                    not api_response.mission_text.startswith('Charging'):
+                        not api_response.mission_text.startswith('Charging'):
                     robot_state.mode.mode = RobotMode.MODE_MOVING
                     robot.mode = MirState.EXECUTING
                 elif api_response.state_id == MirState.READY:
@@ -265,7 +267,8 @@ class FleetDriverMir(Node):
 
                 if robot.docking_requested:
                     if not robot.docking_executed:
-                        robot.docking_executed = ('docking' in api_response.mission_text.lower())
+                        robot.docking_executed = (
+                            'docking' in api_response.mission_text.lower())
 
                     if robot.docking_executed and api_response.state_id == MirState.READY:
                         robot_state.mode.mode = RobotMode.MODE_IDLE
@@ -276,18 +279,18 @@ class FleetDriverMir(Node):
 
         except ApiException as e:
             self.get_logger().warn('Exception when calling \
-                                   DefaultApi->status_get: %s\n' %e)
+                                   DefaultApi->status_get: %s\n' % e)
 
     def on_robot_mode_request(self, msg):
         robot = self.robots.get(msg.robot_name)
         if not robot:
-            self.get_logger().info(f'Could not find a robot named [{msg.robot_name}]')
+            self.get_logger().info(
+                f'Could not find a robot named [{msg.robot_name}]')
             return
 
         if robot.current_task_id == msg.task_id:
             self.get_logger().info(f'Already following task [{msg.task_id}]')
             return
-
 
         robot.cancel_path()
 
@@ -300,7 +303,8 @@ class FleetDriverMir(Node):
 
         desired_mir_mode = mir_mode_request_dict.get(msg.mode.mode)
         if desired_mir_mode:
-            self.get_logger().info(f'setting robot {msg.robot_name} mode to {msg.mode}')
+            self.get_logger().info(
+                f'setting robot {msg.robot_name} mode to {msg.mode}')
             status = PutStatus(state_id=desired_mir_mode)
             robot.api.status_put(status)
             return
@@ -311,10 +315,10 @@ class FleetDriverMir(Node):
             )
             return
 
-
         # Find the mission
         mission_str = f'{msg.parameters[0].name}_{msg.parameters[0].value}'
-        self.get_logger().info(f'Attempting to send mission [{mission_str}] to robot [{msg.robot_name}]')
+        self.get_logger().info(
+            f'Attempting to send mission [{mission_str}] to robot [{msg.robot_name}]')
         try:
             mission_id = robot.missions[mission_str].guid
         except KeyError:
@@ -323,7 +327,7 @@ class FleetDriverMir(Node):
 
         # Execute the mission
         try:
-            mission = PostMissionQueues(mission_id = mission_id)
+            mission = PostMissionQueues(mission_id=mission_id)
             robot.api.mission_queue_post(mission)
         except KeyError:
             self.get_logger().error('Error when posting charging mission')
@@ -333,7 +337,6 @@ class FleetDriverMir(Node):
             robot.docking_requested = True
             robot.docking_executed = False
             print(' === We are in docking mode')
-
 
         robot.current_task_id = msg.task_id
 
@@ -346,20 +349,22 @@ class FleetDriverMir(Node):
         robot = self.robots.get(msg.robot_name)
 
         if not robot:
-            self.get_logger().info(f'Could not find robot with the name [{msg.robot_name}]')
+            self.get_logger().info(
+                f'Could not find robot with the name [{msg.robot_name}]')
             return
 
         if robot.current_task_id == msg.task_id:
             self.get_logger().info(f'Already received task [{msg.task_id}].')
             return
 
-        self.get_logger().info(f'Issuing task [{msg.task_id}] to robot [{msg.robot_name}]')
+        self.get_logger().info(
+            f'Issuing task [{msg.task_id}] to robot [{msg.robot_name}]')
         robot.follow_new_path(msg)
 
     def load_missions(self, robot):
         self.get_logger().info('retrieving missions...')
         robot_missions_ls = robot.api.missions_get()
-        #If name starts with 'move_coordinate' 
+        # If name starts with 'move_coordinate'
         for i in robot_missions_ls:
             if "move_coordinate" in i.name:
                 print("removing {}".format(i.name))
@@ -384,13 +389,14 @@ class FleetDriverMir(Node):
                 {'id': 'retries', 'value': retries},
                 {'id': 'distance_threshold', 'value': 0.1},
             ],
-            priority = 1
+            priority=1
         )
         response2 = robot.api.missions_mission_id_actions_post(
-            mission_id = response.guid,
-            body = action
+            mission_id=response.guid,
+            body=action
         )
-        self.get_logger().info(f'created mission to move coordinate to "{location}"')
+        self.get_logger().info(
+            f'created mission to move coordinate to "{location}"')
         return response.guid
 
     def create_dock_mission(self, robot, dock_name):
@@ -448,23 +454,25 @@ class FleetDriverMir(Node):
     def update_positions(self, robot):
         self.get_logger().info('retrieving positions...')
         count = 0
-        
-        now=datetime.now()
+
+        now = datetime.now()
         stamp = now.strftime("%y%m%d_%H%M")
         stamp = "mir_positions_transformed_"+stamp
-        big_dict=[]
-        with open(stamp+".json","w+") as f:        
+        big_dict = []
+        with open(stamp+".json", "w+") as f:
             for pos in robot.api.positions_get():
                 if pos.name not in robot.positions or pos.guid != robot.positions[pos.name].guid:
                     if pos.type_id == MirPositionTypes.ROBOT or \
                             pos.type_id == MirPositionTypes.CHARGING_STATION_ENTRY:
-                        robot.positions[pos.name] = robot.api.positions_guid_get(pos.guid)
+                        robot.positions[pos.name] = robot.api.positions_guid_get(
+                            pos.guid)
                         count += 1
                         pos_dict = robot.api.positions_guid_get(pos.guid)
                         pos_dict = pos_dict.to_dict()
-                        pos_dict['rmf_x'],pos_dict['rmf_y'] = self.mir2rmf_transform.transform([pos_dict['pos_x'],pos_dict['pos_y']])
+                        pos_dict['rmf_x'], pos_dict['rmf_y'] = self.mir2rmf_transform.transform(
+                            [pos_dict['pos_x'], pos_dict['pos_y']])
                         big_dict.append(pos_dict)
-            json.dump(big_dict,f)
+            json.dump(big_dict, f)
         self.get_logger().info(f'updated {count} positions')
 
     def create_all_api_clients(self, config):
@@ -495,7 +503,6 @@ def main():
     rclpy.init()
     node = FleetDriverMir(fleet_config)
     rclpy.spin(node)
-x
     node.destroy_node()
     rclpy.shutdown()
 

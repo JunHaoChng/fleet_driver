@@ -1,0 +1,124 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	/0d0ef5f0/
+0	sample_config.json	/^        "ref_places": ["L1\/door_west"]$/;"	s	array:maps.L1.ref_places
+0	sample_config.json	/^    {$/;"	o	array:robots
+CHARGING_STATION	fleet_driver_mir/fleet_driver_mir.py	/^    CHARGING_STATION = 7$/;"	v	class:MirPositionTypes
+CHARGING_STATION	fleet_driver_mir/remove_move_coordinate.py	/^    CHARGING_STATION = 7$/;"	v	class:MirPositionTypes
+CHARGING_STATION	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    CHARGING_STATION = 7$/;"	v	class:MirPositionTypes
+CHARGING_STATION_ENTRY	fleet_driver_mir/fleet_driver_mir.py	/^    CHARGING_STATION_ENTRY = 8$/;"	v	class:MirPositionTypes
+CHARGING_STATION_ENTRY	fleet_driver_mir/remove_move_coordinate.py	/^    CHARGING_STATION_ENTRY = 8$/;"	v	class:MirPositionTypes
+CHARGING_STATION_ENTRY	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    CHARGING_STATION_ENTRY = 8$/;"	v	class:MirPositionTypes
+ERROR	fleet_driver_mir/fleet_driver_mir.py	/^    ERROR = 12$/;"	v	class:MirState
+ERROR	fleet_driver_mir/remove_move_coordinate.py	/^    ERROR = 12$/;"	v	class:MirState
+ERROR	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    ERROR = 12$/;"	v	class:MirState
+EXECUTING	fleet_driver_mir/fleet_driver_mir.py	/^    EXECUTING = 5$/;"	v	class:MirState
+EXECUTING	fleet_driver_mir/remove_move_coordinate.py	/^    EXECUTING = 5$/;"	v	class:MirState
+EXECUTING	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    EXECUTING = 5$/;"	v	class:MirState
+FLEET_NAME	fleet_driver_mir/fleet_driver_mir.py	/^    FLEET_NAME = 'mir100'$/;"	v	class:FleetDriverMir
+FLEET_NAME	fleet_driver_mir/remove_move_coordinate.py	/^    FLEET_NAME = 'mir100'$/;"	v	class:FleetDriverMir
+FLEET_NAME	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    FLEET_NAME = 'mir100'$/;"	v	class:FleetDriverMir
+FleetDriverMir	fleet_driver_mir/fleet_driver_mir.py	/^class FleetDriverMir(Node):$/;"	c
+FleetDriverMir	fleet_driver_mir/remove_move_coordinate.py	/^class FleetDriverMir(Node):$/;"	c
+FleetDriverMir	fleet_driver_mir/report_positions_in_rmf_coord.py	/^class FleetDriverMir(Node):$/;"	c
+Instructions	README.md	/^## Instructions $/;"	s	chapter:fleet_driver_mir
+L1	sample_config.json	/^     "L1": {$/;"	o	object:maps
+MANUAL_CONTROL	fleet_driver_mir/fleet_driver_mir.py	/^    MANUAL_CONTROL = 11$/;"	v	class:MirState
+MANUAL_CONTROL	fleet_driver_mir/remove_move_coordinate.py	/^    MANUAL_CONTROL = 11$/;"	v	class:MirState
+MANUAL_CONTROL	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    MANUAL_CONTROL = 11$/;"	v	class:MirState
+MirPositionTypes	fleet_driver_mir/fleet_driver_mir.py	/^class MirPositionTypes(enum.IntEnum):$/;"	c
+MirPositionTypes	fleet_driver_mir/remove_move_coordinate.py	/^class MirPositionTypes(enum.IntEnum):$/;"	c
+MirPositionTypes	fleet_driver_mir/report_positions_in_rmf_coord.py	/^class MirPositionTypes(enum.IntEnum):$/;"	c
+MirState	fleet_driver_mir/fleet_driver_mir.py	/^class MirState(enum.IntEnum):$/;"	c
+MirState	fleet_driver_mir/remove_move_coordinate.py	/^class MirState(enum.IntEnum):$/;"	c
+MirState	fleet_driver_mir/report_positions_in_rmf_coord.py	/^class MirState(enum.IntEnum):$/;"	c
+PAUSE	fleet_driver_mir/fleet_driver_mir.py	/^    PAUSE = 4$/;"	v	class:MirState
+PAUSE	fleet_driver_mir/remove_move_coordinate.py	/^    PAUSE = 4$/;"	v	class:MirState
+PAUSE	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    PAUSE = 4$/;"	v	class:MirState
+READY	fleet_driver_mir/fleet_driver_mir.py	/^    READY = 3$/;"	v	class:MirState
+READY	fleet_driver_mir/remove_move_coordinate.py	/^    READY = 3$/;"	v	class:MirState
+READY	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    READY = 3$/;"	v	class:MirState
+ROBOT	fleet_driver_mir/fleet_driver_mir.py	/^    ROBOT = 0$/;"	v	class:MirPositionTypes
+ROBOT	fleet_driver_mir/remove_move_coordinate.py	/^    ROBOT = 0$/;"	v	class:MirPositionTypes
+ROBOT	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    ROBOT = 0$/;"	v	class:MirPositionTypes
+Requirements	README.md	/^## Requirements$/;"	s	chapter:fleet_driver_mir
+Robot	fleet_driver_mir/fleet_driver_mir.py	/^class Robot():$/;"	c
+Robot	fleet_driver_mir/remove_move_coordinate.py	/^class Robot():$/;"	c
+Robot	fleet_driver_mir/report_positions_in_rmf_coord.py	/^class Robot():$/;"	c
+STATUS_PUB_PERIOD	fleet_driver_mir/fleet_driver_mir.py	/^    STATUS_PUB_PERIOD = 1.0$/;"	v	class:FleetDriverMir
+STATUS_PUB_PERIOD	fleet_driver_mir/remove_move_coordinate.py	/^    STATUS_PUB_PERIOD = 1.0$/;"	v	class:FleetDriverMir
+STATUS_PUB_PERIOD	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    STATUS_PUB_PERIOD = 1.0$/;"	v	class:FleetDriverMir
+Utilities	README.md	/^## Utilities$/;"	s	chapter:fleet_driver_mir
+__init__	fleet_driver_mir/fleet_driver_mir.py	/^    def __init__(self, fleet_config):$/;"	m	class:FleetDriverMir
+__init__	fleet_driver_mir/fleet_driver_mir.py	/^    def __init__(self, parent):$/;"	m	class:Robot
+__init__	fleet_driver_mir/remove_move_coordinate.py	/^    def __init__(self, fleet_config):$/;"	m	class:FleetDriverMir
+__init__	fleet_driver_mir/remove_move_coordinate.py	/^    def __init__(self, parent):$/;"	m	class:Robot
+__init__	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def __init__(self, fleet_config):$/;"	m	class:FleetDriverMir
+__init__	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def __init__(self, parent):$/;"	m	class:Robot
+auto_create_missions	sample_config.json	/^  "auto_create_missions": false,$/;"	b
+auto_create_positions	sample_config.json	/^  "auto_create_positions": false$/;"	b
+base_url	sample_config.json	/^      "base_url": "http:\/\/someurl",$/;"	s	object:robots.0
+calculate_path_request_yaw	fleet_driver_mir/fleet_driver_mir.py	/^    def calculate_path_request_yaw(self, location_request, location_request_next):$/;"	m	class:FleetDriverMir
+calculate_path_request_yaw	fleet_driver_mir/remove_move_coordinate.py	/^    def calculate_path_request_yaw(self, location_request, location_request_next):$/;"	m	class:FleetDriverMir
+calculate_path_request_yaw	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def calculate_path_request_yaw(self, location_request, location_request_next):$/;"	m	class:FleetDriverMir
+cancel_path	fleet_driver_mir/fleet_driver_mir.py	/^    def cancel_path(self):$/;"	m	class:Robot
+cancel_path	fleet_driver_mir/remove_move_coordinate.py	/^    def cancel_path(self):$/;"	m	class:Robot
+cancel_path	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def cancel_path(self):$/;"	m	class:Robot
+create_all_api_clients	fleet_driver_mir/fleet_driver_mir.py	/^    def create_all_api_clients(self, config):$/;"	m	class:FleetDriverMir
+create_all_api_clients	fleet_driver_mir/remove_move_coordinate.py	/^    def create_all_api_clients(self, config):$/;"	m	class:FleetDriverMir
+create_all_api_clients	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def create_all_api_clients(self, config):$/;"	m	class:FleetDriverMir
+create_dock_mission	fleet_driver_mir/fleet_driver_mir.py	/^    def create_dock_mission(self, robot, dock_name):$/;"	m	class:FleetDriverMir
+create_dock_mission	fleet_driver_mir/remove_move_coordinate.py	/^    def create_dock_mission(self, robot, dock_name):$/;"	m	class:FleetDriverMir
+create_dock_mission	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def create_dock_mission(self, robot, dock_name):$/;"	m	class:FleetDriverMir
+create_move_coordinate_mission	fleet_driver_mir/fleet_driver_mir.py	/^    def create_move_coordinate_mission(self, robot, location, retries=10):$/;"	m	class:FleetDriverMir
+create_move_coordinate_mission	fleet_driver_mir/remove_move_coordinate.py	/^    def create_move_coordinate_mission(self, robot, location, retries=10):$/;"	m	class:FleetDriverMir
+create_move_coordinate_mission	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def create_move_coordinate_mission(self, robot, location, retries=10):$/;"	m	class:FleetDriverMir
+create_move_mission	fleet_driver_mir/fleet_driver_mir.py	/^    def create_move_mission(self, robot, place_name, retries=10):$/;"	m	class:FleetDriverMir
+create_move_mission	fleet_driver_mir/remove_move_coordinate.py	/^    def create_move_mission(self, robot, place_name, retries=10):$/;"	m	class:FleetDriverMir
+create_move_mission	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def create_move_mission(self, robot, place_name, retries=10):$/;"	m	class:FleetDriverMir
+create_single_api_client	fleet_driver_mir/fleet_driver_mir.py	/^    def create_single_api_client(self, config, idx):$/;"	m	class:FleetDriverMir
+create_single_api_client	fleet_driver_mir/remove_move_coordinate.py	/^    def create_single_api_client(self, config, idx):$/;"	m	class:FleetDriverMir
+create_single_api_client	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def create_single_api_client(self, config, idx):$/;"	m	class:FleetDriverMir
+fleet_driver_mir	README.md	/^# fleet_driver_mir$/;"	c
+follow_new_path	fleet_driver_mir/fleet_driver_mir.py	/^    def follow_new_path(self, msg):$/;"	m	class:Robot
+follow_new_path	fleet_driver_mir/remove_move_coordinate.py	/^    def follow_new_path(self, msg):$/;"	m	class:Robot
+follow_new_path	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def follow_new_path(self, msg):$/;"	m	class:Robot
+load_missions	fleet_driver_mir/fleet_driver_mir.py	/^    def load_missions(self, robot):$/;"	m	class:FleetDriverMir
+load_missions	fleet_driver_mir/remove_move_coordinate.py	/^    def load_missions(self, robot):$/;"	m	class:FleetDriverMir
+load_missions	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def load_missions(self, robot):$/;"	m	class:FleetDriverMir
+main	fleet_driver_mir/fleet_driver_mir.py	/^def main():$/;"	f
+main	fleet_driver_mir/remove_move_coordinate.py	/^def main():$/;"	f
+main	fleet_driver_mir/report_positions_in_rmf_coord.py	/^def main():$/;"	f
+maps	sample_config.json	/^  "maps": {$/;"	o
+name	sample_config.json	/^      "name": "name_used_by_Romi-H",$/;"	s	object:robots.0
+new_file	fleet_driver_mir/jsontocsv.py	/^    new_file=f'{sys.argv[1]}'[:-4]+'csv'$/;"	v
+on_path_request	fleet_driver_mir/fleet_driver_mir.py	/^    def on_path_request(self, msg):$/;"	m	class:FleetDriverMir
+on_path_request	fleet_driver_mir/remove_move_coordinate.py	/^    def on_path_request(self, msg):$/;"	m	class:FleetDriverMir
+on_path_request	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def on_path_request(self, msg):$/;"	m	class:FleetDriverMir
+on_robot_mode_request	fleet_driver_mir/fleet_driver_mir.py	/^    def on_robot_mode_request(self, msg):$/;"	m	class:FleetDriverMir
+on_robot_mode_request	fleet_driver_mir/remove_move_coordinate.py	/^    def on_robot_mode_request(self, msg):$/;"	m	class:FleetDriverMir
+on_robot_mode_request	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def on_robot_mode_request(self, msg):$/;"	m	class:FleetDriverMir
+package_name	setup.py	/^package_name = 'fleet_driver_mir'$/;"	v
+password	sample_config.json	/^      "password": "password_of_some_sort",$/;"	s	object:robots.0
+path_following_closure	fleet_driver_mir/fleet_driver_mir.py	/^        def path_following_closure():$/;"	f	member:Robot.follow_new_path	file:
+path_following_closure	fleet_driver_mir/remove_move_coordinate.py	/^        def path_following_closure():$/;"	f	member:Robot.follow_new_path	file:
+path_following_closure	fleet_driver_mir/report_positions_in_rmf_coord.py	/^        def path_following_closure():$/;"	f	member:Robot.follow_new_path	file:
+pd	fleet_driver_mir/jsontocsv.py	/^import pandas as pd$/;"	I
+pub_fleet	fleet_driver_mir/fleet_driver_mir.py	/^    def pub_fleet(self):$/;"	m	class:FleetDriverMir
+pub_fleet	fleet_driver_mir/remove_move_coordinate.py	/^    def pub_fleet(self):$/;"	m	class:FleetDriverMir
+pub_fleet	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def pub_fleet(self):$/;"	m	class:FleetDriverMir
+ref_places	sample_config.json	/^        "ref_places": ["L1\/door_west"]$/;"	a	object:maps.L1
+robots	sample_config.json	/^  "robots": [$/;"	a
+starting_map	sample_config.json	/^      "starting_map": "L1"$/;"	s	object:robots.0
+test_copyright	test/test_copyright.py	/^def test_copyright():$/;"	f
+test_flake8	test/test_flake8.py	/^def test_flake8():$/;"	f
+test_pep257	test/test_pep257.py	/^def test_pep257():$/;"	f
+update_positions	fleet_driver_mir/fleet_driver_mir.py	/^    def update_positions(self, robot):$/;"	m	class:FleetDriverMir
+update_positions	fleet_driver_mir/remove_move_coordinate.py	/^    def update_positions(self, robot):$/;"	m	class:FleetDriverMir
+update_positions	fleet_driver_mir/report_positions_in_rmf_coord.py	/^    def update_positions(self, robot):$/;"	m	class:FleetDriverMir
+user	sample_config.json	/^      "user": "some_user",$/;"	s	object:robots.0
