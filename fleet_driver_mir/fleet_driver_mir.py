@@ -43,12 +43,14 @@ class Robot():
         self.missions = {}
         self.maps = {}
         self.positions = {}
+        self.latest_rmf_location = None
         self.current_map = None
         self.current_target = None
         self.prev_target = None
         self.place_sub = None
         self.mode_sub = None
         self.mode = None
+        self.adapter_error = False
         self.current_task_id = 'idle'
         self.remaining_path = []
 
@@ -80,6 +82,18 @@ class Robot():
         self.docking_executed = False
         self.current_task_id = msg.task_id
         self.cancel_path()
+
+        if self.latest_rmf_location is not None:
+            if len(msg.path) > 0:
+                location = msg.path[0]
+                dx = location.x - self.latest_rmf_location.x
+                dy = location.y - self.latest_rmf_location.y
+                norm = math.sqrt(dx*dx + dy*dy)
+                if norm > 1.0:
+                    self.adapter_error = True
+                    return
+
+        self.adapter_error = False
 
         # Set MiR state from PAUSE (if) to READY everytime receives new path
         # pick up from commit 15b2bfc
@@ -255,12 +269,15 @@ class FleetDriverMir(Node):
                 rmf_location.x = rmf_pos[0]
                 rmf_location.y = rmf_pos[1]
                 rmf_location.yaw = math.radians(location.yaw) + self.mir2rmf_transform.get_rotation()
+                robot.latest_rmf_location = rmf_location
                 robot_state.location = rmf_location
                 robot_state.path = robot.remaining_path
                 robot_state.location.t.sec = now_sec
                 robot_state.location.t.nanosec = now_ns
 
-                if api_response.mission_text.startswith('Charging'):
+                if robot.adapter_error:
+                    robot_state.mode.mode = RobotMode.MODE_ADAPTER_ERROR
+                elif api_response.mission_text.startswith('Charging'):
                     robot_state.mode.mode = RobotMode.MODE_CHARGING
                     robot.mode = MirState.READY
                 elif api_response.state_id == MirState.PAUSE:
