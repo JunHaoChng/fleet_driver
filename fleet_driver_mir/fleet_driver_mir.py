@@ -364,12 +364,14 @@ class FleetDriverMir(Node):
             self.get_logger().info(f'Could not find robot with the name [{msg.robot_name}]')
             return
 
-        if robot.current_task_id == msg.task_id:
-            self.get_logger().info(f'Already received task [{msg.task_id}].')
-            return
+        self.get_logger().info(f'Read-only fleet simulation. Not actually executing {msg.task_id}')
+        
+        #if robot.current_task_id == msg.task_id:
+        #    self.get_logger().info(f'Already received task [{msg.task_id}].')
+        #    return
 
-        self.get_logger().info(f'Issuing task [{msg.task_id}] to robot [{msg.robot_name}]')
-        robot.follow_new_path(msg)
+        #self.get_logger().info(f'Issuing task [{msg.task_id}] to robot [{msg.robot_name}]')
+        #robot.follow_new_path(msg)
 
     def load_missions(self, robot):
         self.get_logger().info('retrieving missions...')
