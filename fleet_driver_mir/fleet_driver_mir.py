@@ -366,7 +366,7 @@ class FleetDriverMir(Node):
 
         self.get_logger().info(f'Read-only fleet simulation. Not actually executing {msg.task_id}')
         #except only tasks of a certain type
-        if "rmf_task_injector" in msg.task_id:
+        if "rmf_pathrequest_injector" in msg.task_id:
             robot.follow_new_path(msg)
         
         #if robot.current_task_id == msg.task_id:
