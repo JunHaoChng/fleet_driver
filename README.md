@@ -25,12 +25,3 @@ To run the fleet driver, use the following command:
 
 sample format is provided in 'sample_config.json'
 
-## Utilities
-
-Utilities were made in python.
-|Utility|Use|
-|---|---|
-|remove_move_coordinate.py|Removes the move_coordinate missions created by the driver from the MIR.|
-|report_positions_in_rmf_coord.py|Saves all positions on the MIR into a json file.|
-|jsontocsv.py|Converts json into a csv for easy viewing|
-
