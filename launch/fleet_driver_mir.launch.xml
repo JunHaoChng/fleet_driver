@@ -1,0 +1,39 @@
+<?xml version='1.0' ?>
+
+<launch>
+    <arg name="fleet_name" description="Name of MiR Fleet"/>
+    <arg name="fleet_state_topic_name" description="Fleet State Topic Name"/>
+    <arg name="fleet_state_publish_frequency" description="Fleet State Publish Frequency"/>
+    <arg name="path_request_topic_name" description="Path Request Topic Name"/>
+    <arg name="mode_request_topic_name" description="Mode Request Topic Name"/>
+    <arg name="level_name" description="Initial Level of Robot"/>
+    <arg name="config_file_path" description="Path to configuration file"/>
+
+    <!-- Transformation Matrix from RMF coordinate frame to MiR frame -->
+    <arg name="translation_x" description="0.0"/>
+    <arg name="translation_y" description="0.0"/>
+    <arg name="rotation" description="0.0"/>
+    <arg name="scale" description="1.0"/>
+
+    <node pkg="fleet_driver_mir"
+        exec="fleet_driver_mir"
+        name="$(var fleet_name)_fleet_driver_mir_node"
+        output="both">
+
+    <param name="fleet_name" value="$(var fleet_name)"/>
+    <param name="fleet_state_topic_name" value="$(var fleet_state_topic_name)"/>
+    <param name="fleet_state_publish_frequency" value="$(var fleet_state_publish_frequency)"/>
+
+    <param name="path_request_topic_name" value="$(var path_request_topic_name)"/>
+    <param name="mode_request_topic_name" value="$(var mode_request_topic_name)"/>
+    <param name="level_name" value="$(var level_name)"/>
+    <param name="config_file_path" value="$(var config_file_path)"/>
+
+    <param name="translation_x" value="$(var translation_x)"/>
+    <param name="translation_y" value="$(var translation_y)"/>
+    <param name="rotation" value="$(var rotation)"/>
+    <param name="scale" value="$(var scale)"/>
+
+    <param name="use_sim_time" value="false"/>
+    </node>
+</launch>

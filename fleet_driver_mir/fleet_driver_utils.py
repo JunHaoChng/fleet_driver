@@ -162,7 +162,6 @@ class MirState(enum.IntEnum):
 class MirPositionTypes(enum.IntEnum):
   ROBOT = 0
   CHARGING_STATION = 7
-    
   CHARGING_STATION_ENTRY = 8
 
 
@@ -194,7 +193,6 @@ class FleetDriverMir(Node):
     mse = nudged.estimate_error(self.rmf2mir_transform,
                                 self.ref_coordinates_rmf,
                                 self.ref_coordinates_mir)
-    # Mean Square Error must be below a certain threshold
     self.get_logger().info(f'transformation estimate error: {mse}')
 
     for api_client in self.create_all_api_clients(self.fleet_config):
